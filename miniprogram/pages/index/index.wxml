@@ -1,29 +1,48 @@
 <!--index.wxml-->
 <scroll-view class="scrollarea" scroll-y type="list">
-  <view class="container">
-    <view class="userinfo">
-      <block wx:if="{{canIUseNicknameComp && !hasUserInfo}}">
-        <button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
-          <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
-        </button>
-        <view class="nickname-wrapper">
-          <text class="nickname-label">昵称</text>
-          <input type="nickname" class="nickname-input" placeholder="请输入昵称" bind:change="onInputChange" />
-        </view>
-      </block>
-      <block wx:elif="{{!hasUserInfo}}">
-        <button wx:if="{{canIUseGetUserProfile}}" bindtap="getUserProfile"> 获取头像昵称 </button>
-        <view wx:else> 请使用2.10.4及以上版本基础库 </view>
-      </block>
-      <block wx:else>
-        <image bindtap="bindViewTap" class="userinfo-avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
-        <text class="userinfo-nickname">{{userInfo.nickName}}</text>
-      </block>
-    </view>
-    <view class="usermotto">
-      <text class="user-motto">{{motto}}</text>
+  <view style="padding: 10rpx;">
+    <view>
+      <view style="display: flex;">
+        当前里程：<input style="flex: 1" class="input"
+        value="{{newRecord.mileage}}" type="number" bindinput="onMileageChange"></input>
+      </view>
 
-      
+      <view style="margin-top: 10rpx; display: flex; align-items: center;">
+        <view style="">
+          单价：<input class="input"
+          value="{{newRecord.price}}" type="number" bindinput="onPriceChange"></input>
+        </view>
+
+        <view style="display: inline-block; width: 20rpx;">
+         x
+        </view>
+
+        <view style="">
+          加油量：<input class="input"
+          value="{{newRecord.quantity}}" type="number" bindinput="onQuantityChange"></input>
+        </view>
+
+        <view>
+         =
+        </view>
+
+        <view style="">
+          实付金额：<input class="input"
+          value="{{newRecord.pay}}" type="number" bindinput="onPayChange"></input>
+        </view>
+      </view>
+
+      <view style="margin-top: 10rpx;">
+        <button bind:tap="saveRecord">保存</button>
+      </view>
+    </view>
+
+    <view  style="margin-top: 30rpx;">
+      <view>
+        <view wx:key="index" wx:for="{{fuelList}}" style="border-bottom: 1rpx solid gray; margin-bottom: 10rpx;">
+          {{item.date}} -- {{item.mileage}}公里 -- {{item.quantity}}升 -- {{item.fuleConsumption}}L/100km
+        </view>
+      </view>
     </view>
   </view>
 </scroll-view>
