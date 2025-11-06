@@ -1,46 +1,99 @@
 <!--index.wxml-->
 <scroll-view class="scrollarea" scroll-y type="list">
-  <view style="padding: 10rpx;">
+  <view style="padding: 20rpx;">
+
+    <!-- 新增模块 -->
     <view>
       <view style="display: flex;">
-        当前里程：<input style="flex: 1" class="input"
-        value="{{newRecord.mileage}}" type="number" bindinput="onMileageChange"></input>
+        当前里程：<input style="flex: 1" class="input" value="{{newRecord.mileage}}" type="number" bindinput="onMileageChange"></input>
       </view>
 
       <view style="margin-top: 10rpx; display: flex; align-items: center;">
-        <view style="">
-          单价：<input class="input"
-          value="{{newRecord.price}}" type="number" bindinput="onPriceChange"></input>
+        <view>
+          单价：<input class="input" value="{{newRecord.price}}" type="number" bindinput="onPriceChange"></input>
         </view>
 
-        <view style="display: inline-block; width: 20rpx;">
-         x
-        </view>
-
-        <view style="">
-          加油量：<input class="input"
-          value="{{newRecord.quantity}}" type="number" bindinput="onQuantityChange"></input>
+        <view style="margin: 0 20rpx;">
+          x
         </view>
 
         <view>
-         =
+          加油量：<input class="input" value="{{newRecord.quantity}}" type="number" bindinput="onQuantityChange"></input>
         </view>
 
-        <view style="">
-          实付金额：<input class="input"
-          value="{{newRecord.pay}}" type="number" bindinput="onPayChange"></input>
+        <view style="margin: 0 20rpx;">
+          =
+        </view>
+
+        <view>
+          实付金额：<input class="input" value="{{newRecord.pay}}" type="number" bindinput="onPayChange"></input>
+        </view>
+      </view>
+
+
+      <view style="margin-top: 10rpx;">
+        <view style="display: flex;">
+          <view>是否加满？</view>
+          <view>
+            <button bind:tap="setAddFull" data-value="true" type="{{ newRecord.isAddFull ? 'primary' : 'default'}}" size="mini">加满</button>
+            <button bind:tap="setAddFull" data-value="false" type="{{ newRecord.isAddFull ? 'default' : 'primary'}}" size="mini">没加满</button>
+          </view>
+        </view>
+
+        <view style="display: flex;">
+          <view>油量警告灯亮了吗？</view>
+          <view>
+            <button bind:tap="setWarningLight" data-value="true" type="{{ newRecord.isWarningLight ? 'primary' : 'default'}}" size="mini">油灯亮</button>
+            <button bind:tap="setWarningLight" data-value="false" type="{{ newRecord.isWarningLight ? 'default' : 'primary'}}" size="mini">没有亮</button>
+          </view>
         </view>
       </view>
 
       <view style="margin-top: 10rpx;">
-        <button bind:tap="saveRecord">保存</button>
+        <button bind:tap="saveRecord" type="default" plain="true">保存</button>
       </view>
     </view>
 
-    <view  style="margin-top: 30rpx;">
+    <!-- 显示模块 -->
+    <view style="margin-top: 30rpx;">
       <view>
-        <view wx:key="index" wx:for="{{fuelList}}" style="border-bottom: 1rpx solid gray; margin-bottom: 10rpx;">
-          {{item.date}} -- {{item.mileage}}公里 -- {{item.quantity}}升 -- {{item.fuleConsumption}}L/100km
+        <view wx:key="index" wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;">
+          <view style="display: flex; justify-content: space-between;">
+            <view>
+              {{item.date}}
+            </view>
+            <view>
+              {{item.fuleConsumption}}升/百公里
+            </view>
+            <view>
+              {{item.mileage}}公里
+            </view>
+          </view>
+
+          <view style="background-color: rgb(242, 242, 242);">
+            <view style="display: flex; justify-content: space-between;">
+              <view>
+                {{item.pay}}元
+              </view>
+              <view>
+                {{item.price}}元/升
+              </view>
+              <view>
+                +{{item.quantity}}升
+              </view>
+            </view>
+            <view style="display: flex;">
+              <view wx:if="{{item.isAddFull}}" style="color: red;">加满</view>
+              <view wx:if="{{item.isWarningLight}}" style="color: red; margin-left: 10rpx;">灯亮</view>
+            </view>
+          </view>
+
+          <view style="margin-top: 10rpx; border-radius: 10rpx; padding: 10rpx; display: flex; justify-content: space-between; background-color: rgb(230, 245, 240);">
+            <view>{{item.cost}}元/公里</view>
+            <view>{{item.costLiter}}升</view>
+            <view>+{{item.diffMile}}公里</view>
+          </view>
+
         </view>
       </view>
     </view>

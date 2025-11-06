@@ -1,5 +1,4 @@
-// index.ts
-// 获取应用实例
+
 const app = getApp<IAppOption>()
 const defaultAvatarUrl = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
 
@@ -13,6 +12,12 @@ interface RecordType {
   isWarningLight: boolean,
 
   fuleConsumption?: number,
+}
+
+interface ShowCardType extends RecordType {
+  cost: number,
+  costLiter: number,
+  diffMile: number,
 }
 
 function getNowString(): string {
@@ -30,7 +35,8 @@ function getNowString(): string {
   const formatNum = (num: number) => num.toString().padStart(2, '0')
 
   // 拼接格式（注意：你要的是“11-5”而非“11-05”，所以month和day不补零）
-  return `${year}-${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
+  // return `${year}-${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
+  return `${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
 }
 
 Component({
@@ -44,36 +50,50 @@ Component({
     canIUseNicknameComp: wx.canIUse('input.type.nickname'),
 
     newRecord: {
-      date: getNowString(),
       mileage: 0,
 
       price: 8,
       quantity: 0,
       pay: 0,
-      isAddFull: true,
-      isWarningLight: true,
+      isAddFull: false,
+      isWarningLight: false,
     } as RecordType,
 
     fuelList: [
       {
-        date: "2025-10-11 14:22:30",
-        mileage: 0,
-        price: 0,
-        quantity: 0,
-        pay: 0,
+        date: "11-6 14:22:30",
+        mileage: 800,
+        price: 8,
+        quantity: 37.5,
+        pay: 300,
         isAddFull: true,
-        isWarningLight: true,
+        isWarningLight: false,
       },
       {
-        date: "2025-11-5 14:22:30",
-        mileage: 300,
-        price: 7.9,
-        quantity: 5,
-        pay: 192,
+        date: "11-5 14:30:30",
+        mileage: 500,
+        price: 8,
+        quantity: 12.5,
+        pay: 100,
+        isAddFull: false,
+        isWarningLight: false,
+      },
+      {
+        date: "10-11 14:22:30",
+        mileage: 200,
+        price: 8,
+        quantity: 12.5,
+        pay: 100,
         isAddFull: true,
-        isWarningLight: true,
+        isWarningLight: false,
       },
     ] as RecordType[],
+    showCardArr: [] as ShowCardType[],
+  },
+  observers: {
+    'fuelList': function (newVal: RecordType[]) {
+
+    }
   },
   lifetimes: {
     created() {
@@ -81,16 +101,8 @@ Component({
     },
     attached() {
       console.log('组件实例进入页面节点树');
-      // ✅ Load from local storage
-      const storedList = wx.getStorageSync('fuelList')
-      if (storedList && Array.isArray(storedList) && storedList.length > 0) {
-        this.setData({
-          fuelList: storedList
-        })
-      }
 
-      // ✅ Recalculate fuel consumption
-      this.calFuleConsumption()
+      this.calCost()
     },
     ready() {
       console.log('组件视图层布局完成');
@@ -131,6 +143,18 @@ Component({
       this.setData({
         'newRecord.pay': pay,
         'newRecord.quantity': Number(quantity.toFixed(2)),
+      })
+    },
+    setAddFull(e: any) {
+      const value = e.currentTarget.dataset.value === 'true'
+      this.setData({
+        'newRecord.isAddFull': value
+      })
+    },
+    setWarningLight(e: any) {
+      const value = e.currentTarget.dataset.value === 'true'
+      this.setData({
+        'newRecord.isWarningLight': value
       })
     },
     saveRecord() {
@@ -181,28 +205,18 @@ Component({
 
 
       let newRecord: RecordType = {
+        ...this.data.newRecord,
         date: getNowString(),
-        mileage: this.data.newRecord.mileage,
-        price: this.data.newRecord.price,
-        quantity: this.data.newRecord.quantity,
-        pay: this.data.newRecord.price,
-        isAddFull: true,
-        isWarningLight: true,
       }
 
       let newArr = [
-        ...this.data.fuelList,
         newRecord,
+        ...this.data.fuelList,
       ]
 
       this.setData({
         fuelList: JSON.parse(JSON.stringify(newArr))
       })
-
-      // ✅ Save to local storage
-      wx.setStorageSync('fuelList', newArr)
-
-      this.calFuleConsumption()
 
       wx.showToast({
         title: '保存成功',
@@ -224,37 +238,74 @@ Component({
       })
     },
 
-    calFuleConsumption() {
-      // 计算油耗
-      let newArr = JSON.parse(JSON.stringify(this.data.fuelList))
-      if (newArr.length >= 2) {
-        for (let i = 1; i < newArr.length; i++) {
+    calCost() {
+      // 深拷贝一份用于计算并回写 showCardArr
+      const showCardArr: ShowCardType[] = JSON.parse(JSON.stringify(this.data.fuelList));
 
-          let quantity = newArr[i].quantity
-          let distance = newArr[i].mileage - newArr[i - 1].mileage
+      // 先算 diffMile（当前 - 下一个）
+      for (let i = 0; i < showCardArr.length - 1; i++) {
+        const cur = showCardArr[i];
+        const next = showCardArr[i + 1];
+        cur.diffMile = cur.mileage - next.mileage;
+      }
+      // 最后一条初始化
+      const last = showCardArr[showCardArr.length - 1];
+      last.diffMile = last.diffMile ?? 0;
+      last.cost = 0;
+      last.costLiter = 0;
+      last.fuleConsumption = 0;
 
-          // 计算油耗 L/100km
-          const consumption = (quantity / distance) * 100
-          const formatted = Number(consumption.toFixed(1))
+      // 收集所有 isAddFull 为 true 的索引（数组是最新在前）
+      const fullIndexes: number[] = [];
+      for (let i = 0; i < showCardArr.length; i++) {
+        if (showCardArr[i].isAddFull) fullIndexes.push(i);
+      }
 
-          newArr[i].fuleConsumption = formatted
+      // 按“从旧到新”配对 full -> full：
+      // fullIndexes 中索引数字越大时间越老；所以从数组尾部往前遍历相邻配对
+      for (let f = fullIndexes.length - 1; f >= 1; f--) {
+        const oldIdx = fullIndexes[f];     // 旧（里程小，时间早）
+        const newIdx = fullIndexes[f - 1]; // 新（里程大，时间晚）
+
+        // 防护：索引顺序必须是 oldIdx > newIdx
+        if (!(oldIdx > newIdx)) continue;
+
+        const totalDistance = showCardArr[newIdx].mileage - showCardArr[oldIdx].mileage;
+        if (totalDistance <= 0) continue;
+
+        // 计算区间总油量：sum quantity for k = newIdx ... (oldIdx - 1)
+        let totalLiters = 0;
+        for (let k = newIdx; k < oldIdx; k++) {
+          totalLiters += (showCardArr[k].quantity || 0);
+        }
+
+        // 平均油耗（升/100km）
+        const avgLPer100km = (totalLiters / totalDistance) * 100;
+
+        // 把这个区间按每条记录的 diffMile 分配消耗（并写回到对应的记录）
+        for (let k = newIdx; k < oldIdx; k++) {
+          const seg = showCardArr[k];
+          const segDist = seg.diffMile || 0;
+          const consumeLiters = segDist * (avgLPer100km / 100); // 该段消耗
+          seg.fuleConsumption = Number(avgLPer100km.toFixed(2)); // 显示每百公里油耗
+          seg.costLiter = -Number(consumeLiters.toFixed(2));     // 负值表示消耗（与 APP 风格一致）
+          seg.cost = segDist > 0 ? Number(((seg.price * consumeLiters) / segDist).toFixed(2)) : 0; // 每公里费用
         }
       }
 
-      // ✅ Save to local storage
-      wx.setStorageSync('fuelList', newArr)
+      // 未被任何 full->full 区间覆盖的条目，保证字段存在（可按需改为估算）
+      for (let i = 0; i < showCardArr.length; i++) {
+        if (typeof showCardArr[i].cost === 'undefined') showCardArr[i].cost = 0;
+        if (typeof showCardArr[i].costLiter === 'undefined') showCardArr[i].costLiter = 0;
+        if (typeof showCardArr[i].fuleConsumption === 'undefined') showCardArr[i].fuleConsumption = 0;
+      }
 
+      // 写回
       this.setData({
-        fuelList: newArr,
-      })
+        showCardArr
+      });
     },
 
-    // 事件处理函数
-    bindViewTap() {
-      wx.navigateTo({
-        url: '../logs/logs',
-      })
-    },
     onChooseAvatar(e: any) {
       const { avatarUrl } = e.detail
       const { nickName } = this.data.userInfo
