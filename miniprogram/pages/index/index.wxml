@@ -57,7 +57,7 @@
     <!-- 显示模块 -->
     <view style="margin-top: 30rpx;">
       <view>
-        <view wx:key="index" wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;">
+        <view wx:key="index" wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;" bind:tap="toModify">
           <view style="display: flex; justify-content: space-between;">
             <view>
               {{item.date}}

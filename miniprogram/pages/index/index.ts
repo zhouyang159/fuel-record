@@ -218,12 +218,6 @@ Component({
         fuelList: JSON.parse(JSON.stringify(newArr))
       })
 
-      wx.showToast({
-        title: '保存成功',
-        icon: 'none',
-        duration: 2000
-      })
-
       this.setData({
         newRecord: {
           date: getNowString(),
@@ -231,80 +225,120 @@ Component({
 
           price: 0,
           quantity: 0,
-          pay: 200,
-          isAddFull: true,
-          isWarningLight: true,
+          pay: 0,
+          isAddFull: false,
+          isWarningLight: false,
         }
       })
+
+      wx.showToast({
+        title: '保存成功',
+        icon: 'none',
+        duration: 2000
+      })
+
+      this.calCost()
     },
 
     calCost() {
-      // 深拷贝一份用于计算并回写 showCardArr
       const showCardArr: ShowCardType[] = JSON.parse(JSON.stringify(this.data.fuelList));
-
-      // 先算 diffMile（当前 - 下一个）
-      for (let i = 0; i < showCardArr.length - 1; i++) {
-        const cur = showCardArr[i];
-        const next = showCardArr[i + 1];
-        cur.diffMile = cur.mileage - next.mileage;
+    
+      // 1) 计算段距离 segments，segments[k] 表示 record[k] -> record[k+1] 的距离
+      const n = showCardArr.length;
+      const segments: number[] = new Array(Math.max(0, n - 1)).fill(0);
+      for (let k = 0; k < n - 1; k++) {
+        segments[k] = showCardArr[k].mileage - showCardArr[k + 1].mileage;
+        showCardArr[k].diffMile = segments[k];
       }
-      // 最后一条初始化
-      const last = showCardArr[showCardArr.length - 1];
-      last.diffMile = last.diffMile ?? 0;
-      last.cost = 0;
-      last.costLiter = 0;
-      last.fuleConsumption = 0;
-
-      // 收集所有 isAddFull 为 true 的索引（数组是最新在前）
-      const fullIndexes: number[] = [];
-      for (let i = 0; i < showCardArr.length; i++) {
-        if (showCardArr[i].isAddFull) fullIndexes.push(i);
+      if (n > 0) showCardArr[n - 1].diffMile = showCardArr[n - 1].diffMile ?? 0;
+    
+      // 初始化字段
+      for (let i = 0; i < n; i++) {
+        showCardArr[i].cost = 0;
+        showCardArr[i].costLiter = 0;
+        showCardArr[i].fuleConsumption = 0;
       }
-
-      // 按“从旧到新”配对 full -> full：
-      // fullIndexes 中索引数字越大时间越老；所以从数组尾部往前遍历相邻配对
-      for (let f = fullIndexes.length - 1; f >= 1; f--) {
-        const oldIdx = fullIndexes[f];     // 旧（里程小，时间早）
-        const newIdx = fullIndexes[f - 1]; // 新（里程大，时间晚）
-
-        // 防护：索引顺序必须是 oldIdx > newIdx
-        if (!(oldIdx > newIdx)) continue;
-
-        const totalDistance = showCardArr[newIdx].mileage - showCardArr[oldIdx].mileage;
-        if (totalDistance <= 0) continue;
-
-        // 计算区间总油量：sum quantity for k = newIdx ... (oldIdx - 1)
-        let totalLiters = 0;
-        for (let k = newIdx; k < oldIdx; k++) {
-          totalLiters += (showCardArr[k].quantity || 0);
-        }
-
-        // 平均油耗（升/100km）
+    
+      // 辅助：把 totalLiters 按区间 s..e-1 的距离分配到每个段（写回到对应的 record[k]）
+      function distribute(s: number, e: number, totalLiters: number) {
+        const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0);
+        if (totalDistance <= 0) return;
         const avgLPer100km = (totalLiters / totalDistance) * 100;
-
-        // 把这个区间按每条记录的 diffMile 分配消耗（并写回到对应的记录）
-        for (let k = newIdx; k < oldIdx; k++) {
-          const seg = showCardArr[k];
-          const segDist = seg.diffMile || 0;
-          const consumeLiters = segDist * (avgLPer100km / 100); // 该段消耗
-          seg.fuleConsumption = Number(avgLPer100km.toFixed(2)); // 显示每百公里油耗
-          seg.costLiter = -Number(consumeLiters.toFixed(2));     // 负值表示消耗（与 APP 风格一致）
-          seg.cost = segDist > 0 ? Number(((seg.price * consumeLiters) / segDist).toFixed(2)) : 0; // 每公里费用
+        for (let k = s; k < e; k++) {
+          const segDist = segments[k] || 0;
+          const consumeLiters = segDist * (avgLPer100km / 100);
+          showCardArr[k].fuleConsumption = Number(avgLPer100km.toFixed(2));
+          showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2));
+          const price = showCardArr[k].price ?? 0;
+          showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
         }
       }
-
-      // 未被任何 full->full 区间覆盖的条目，保证字段存在（可按需改为估算）
-      for (let i = 0; i < showCardArr.length; i++) {
-        if (typeof showCardArr[i].cost === 'undefined') showCardArr[i].cost = 0;
-        if (typeof showCardArr[i].costLiter === 'undefined') showCardArr[i].costLiter = 0;
-        if (typeof showCardArr[i].fuleConsumption === 'undefined') showCardArr[i].fuleConsumption = 0;
+    
+      // 2) full -> full（优先）
+      const fullIndexes: number[] = [];
+      for (let i = 0; i < n; i++) if (showCardArr[i].isAddFull) fullIndexes.push(i);
+      const covered = new Array(Math.max(0, n - 1)).fill(false); // 标记哪些段已由 full->full 覆盖
+    
+      for (let fi = fullIndexes.length - 1; fi >= 1; fi--) {
+        const oldIdx = fullIndexes[fi];     // 旧（时间早，索引大）
+        const newIdx = fullIndexes[fi - 1]; // 新（时间晚，索引小）
+        if (!(oldIdx > newIdx)) continue;
+    
+        const s = newIdx;
+        const e = oldIdx;
+        // totalLiters 按 APP 逻辑：sum quantity for k = s .. e-1 （包含 newIdx 的 quantity，排除 oldIdx）
+        const totalLiters = showCardArr.slice(s, e).reduce((sum, v) => sum + (v.quantity || 0), 0);
+        distribute(s, e, totalLiters);
+        for (let k = s; k < e; k++) covered[k] = true;
       }
-
+    
+      // 3) warning -> warning（仅当两次 warning 之间没有 full；并按你要求 totalLiters = 旧的 warning 的 quantity）
+      const warnIndexes: number[] = [];
+      for (let i = 0; i < n; i++) if (showCardArr[i].isWarningLight) warnIndexes.push(i);
+    
+      for (let wi = warnIndexes.length - 1; wi >= 1; wi--) {
+        const oldIdx = warnIndexes[wi];     // 旧（时间早）
+        const newIdx = warnIndexes[wi - 1]; // 新（时间晚）
+        if (!(oldIdx > newIdx)) continue;
+    
+        // 如果区间内存在 full -> 跳过（full->full 优先）
+        const hasFull = showCardArr.slice(newIdx + 1, oldIdx).some(v => v.isAddFull);
+        if (hasFull) continue;
+    
+        const s = newIdx;
+        const e = oldIdx;
+        const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0);
+        if (totalDistance <= 0) continue;
+    
+        // **关键改动**：warning->warning 的总油量按 旧的 warning 的 quantity（oldIdx 的 quantity）
+        const totalLiters = showCardArr[oldIdx].quantity || 0;
+    
+        // 分配（跳过已被 full 覆盖的段）
+        const totalDistanceForCalc = totalDistance; // 用整个区间 distance 计算 avg，然后跳过 covered 段写入
+        if (totalDistanceForCalc > 0 && totalLiters > 0) {
+          const avgLPer100km_warn = (totalLiters / totalDistanceForCalc) * 100;
+          for (let k = s; k < e; k++) {
+            if (covered[k]) continue;
+            const segDist = segments[k] || 0;
+            const consumeLiters = segDist * (avgLPer100km_warn / 100);
+            showCardArr[k].fuleConsumption = Number(avgLPer100km_warn.toFixed(2));
+            showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2));
+            const price = showCardArr[k].price ?? 0;
+            showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
+          }
+        }
+      }
+    
       // 写回
-      this.setData({
-        showCardArr
-      });
+      this.setData({ showCardArr });
+    },    
+
+    toModify() {
+      wx.navigateTo({
+        url: '/pages/modify/modify' 
+      })
     },
+    
 
     onChooseAvatar(e: any) {
       const { avatarUrl } = e.detail
