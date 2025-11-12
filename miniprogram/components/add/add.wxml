@@ -1,0 +1,34 @@
+
+
+
+<view>
+  <view style="display: flex;">
+    当前里程：<input style="flex: 1" class="input" value="{{record.mileage}}" type="number" bindinput="onMileageChange" />
+  </view>
+
+  <view style="margin-top: 10rpx; display: flex; align-items: center;">
+    <view>单价：<input class="input" value="{{record.price}}" type="number" bindinput="onPriceChange" /></view>
+    <view style="margin: 0 20rpx;">x</view>
+    <view>加油量：<input class="input" value="{{record.quantity}}" type="number" bindinput="onQuantityChange" /></view>
+    <view style="margin: 0 20rpx;">=</view>
+    <view>实付金额：<input class="input" value="{{record.pay}}" type="number" bindinput="onPayChange" /></view>
+  </view>
+
+  <view style="margin-top: 10rpx;">
+    <view style="display: flex;">
+      <view>是否加满？</view>
+      <view>
+        <button bindtap="setAddFull" data-value="true" type="{{ record.isAddFull ? 'primary' : 'default'}}" size="mini">加满</button>
+        <button bindtap="setAddFull" data-value="false" type="{{ record.isAddFull ? 'default' : 'primary'}}" size="mini">没加满</button>
+      </view>
+    </view>
+
+    <view style="display: flex;">
+      <view>油量警告灯亮了吗？</view>
+      <view>
+        <button bindtap="setWarningLight" data-value="true" type="{{ record.isWarningLight ? 'primary' : 'default'}}" size="mini">油灯亮</button>
+        <button bindtap="setWarningLight" data-value="false" type="{{ record.isWarningLight ? 'default' : 'primary'}}" size="mini">没有亮</button>
+      </view>
+    </view>
+  </view>
+</view>

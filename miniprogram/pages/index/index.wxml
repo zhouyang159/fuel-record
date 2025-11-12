@@ -3,61 +3,24 @@
   <view style="padding: 20rpx;">
 
     <!-- 新增模块 -->
-    <view>
-      <view style="display: flex;">
-        当前里程：<input style="flex: 1" class="input" value="{{newRecord.mileage}}" type="number" bindinput="onMileageChange"></input>
-      </view>
+    <add
+      record="{{newRecord}}"
+      bind:onRecordChange="onRecordChange"
+    />
 
-      <view style="margin-top: 10rpx; display: flex; align-items: center;">
-        <view>
-          单价：<input class="input" value="{{newRecord.price}}" type="number" bindinput="onPriceChange"></input>
-        </view>
-
-        <view style="margin: 0 20rpx;">
-          x
-        </view>
-
-        <view>
-          加油量：<input class="input" value="{{newRecord.quantity}}" type="number" bindinput="onQuantityChange"></input>
-        </view>
-
-        <view style="margin: 0 20rpx;">
-          =
-        </view>
-
-        <view>
-          实付金额：<input class="input" value="{{newRecord.pay}}" type="number" bindinput="onPayChange"></input>
-        </view>
-      </view>
-
-
-      <view style="margin-top: 10rpx;">
-        <view style="display: flex;">
-          <view>是否加满？</view>
-          <view>
-            <button bind:tap="setAddFull" data-value="true" type="{{ newRecord.isAddFull ? 'primary' : 'default'}}" size="mini">加满</button>
-            <button bind:tap="setAddFull" data-value="false" type="{{ newRecord.isAddFull ? 'default' : 'primary'}}" size="mini">没加满</button>
-          </view>
-        </view>
-
-        <view style="display: flex;">
-          <view>油量警告灯亮了吗？</view>
-          <view>
-            <button bind:tap="setWarningLight" data-value="true" type="{{ newRecord.isWarningLight ? 'primary' : 'default'}}" size="mini">油灯亮</button>
-            <button bind:tap="setWarningLight" data-value="false" type="{{ newRecord.isWarningLight ? 'default' : 'primary'}}" size="mini">没有亮</button>
-          </view>
-        </view>
-      </view>
-
-      <view style="margin-top: 10rpx;">
-        <button bind:tap="saveRecord" type="default" plain="true">保存</button>
-      </view>
+    <view style="margin-top: 10rpx;">
+      <button bindtap="saveRecord" type="default" plain="true">保存</button>
     </view>
 
     <!-- 显示模块 -->
     <view style="margin-top: 30rpx;">
       <view>
-        <view wx:key="index" wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;" bind:tap="toModify">
+        <view 
+            wx:key="index" 
+            wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;" 
+            data-index="{{index}}"
+            bind:tap="toModify"
+        >
           <view style="display: flex; justify-content: space-between;">
             <view>
               {{item.date}}

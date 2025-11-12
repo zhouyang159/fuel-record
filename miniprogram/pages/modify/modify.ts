@@ -1,66 +1,30 @@
-// pages/modify.ts
+import {RecordType} from '../../utils/types'
+
 Page({
-
-  /**
-   * Page initial data
-   */
   data: {
-
+    record: {} as RecordType,
   },
+  onLoad(){
+    const eventChannel = this.getOpenerEventChannel()
+    eventChannel.on('acceptDataFromOpenerPage', (data) => {
+      const record = data.record as RecordType
 
-  /**
-   * Lifecycle function--Called when page load
-   */
-  onLoad() {
-
+      this.setData({
+        record: record,
+      })
+    })
   },
-
-  /**
-   * Lifecycle function--Called when page is initially rendered
-   */
-  onReady() {
-
+  onRecordChange(e: { detail: RecordType }) {
+    this.setData({
+      record: e.detail,
+    })
   },
-
-  /**
-   * Lifecycle function--Called when page show
-   */
-  onShow() {
-
-  },
-
-  /**
-   * Lifecycle function--Called when page hide
-   */
-  onHide() {
-
-  },
-
-  /**
-   * Lifecycle function--Called when page unload
-   */
-  onUnload() {
-
-  },
-
-  /**
-   * Page event handler function--Called when user drop down
-   */
-  onPullDownRefresh() {
-
-  },
-
-  /**
-   * Called when page reach bottom
-   */
-  onReachBottom() {
-
-  },
-
-  /**
-   * Called when user click on the top right corner to share
-   */
-  onShareAppMessage() {
-
+  updateRecord() {
+    const eventChannel = this.getOpenerEventChannel()
+    eventChannel.emit('updateRecord', this.data.record)
+    
+    setTimeout(() => {
+      wx.navigateBack()
+    }, 0)
   }
 })

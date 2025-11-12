@@ -1,2 +1,10 @@
-<!--pages/modify.wxml-->
-<text>pages/modify.wxml</text>
+<view style="padding: 20rpx;">
+  <add
+    record="{{record}}"
+    bind:onRecordChange="onRecordChange"
+  />
+
+  <view style="margin-top: 10rpx;">
+    <button bindtap="updateRecord" type="default" plain="true">更新</button>
+  </view>
+</view>

@@ -9,7 +9,5 @@ page {
   overflow-y: hidden;
 }
 
-.input {
-  border: 1px solid red;
-}
+
 

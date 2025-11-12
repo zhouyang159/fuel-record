@@ -1,24 +1,7 @@
-
 const app = getApp<IAppOption>()
 const defaultAvatarUrl = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
 
-interface RecordType {
-  date: string,
-  mileage: number,
-  price: number,
-  quantity: number,
-  pay: number,
-  isAddFull: boolean,
-  isWarningLight: boolean,
-
-  fuleConsumption?: number,
-}
-
-interface ShowCardType extends RecordType {
-  cost: number,
-  costLiter: number,
-  diffMile: number,
-}
+import {RecordType, ShowCardType} from '../../utils/types'
 
 function getNowString(): string {
   const date = new Date()
@@ -61,6 +44,7 @@ Component({
 
     fuelList: [
       {
+        id: '1',
         date: "11-6 14:22:30",
         mileage: 800,
         price: 8,
@@ -70,6 +54,7 @@ Component({
         isWarningLight: false,
       },
       {
+        id: '2',
         date: "11-5 14:30:30",
         mileage: 500,
         price: 8,
@@ -79,6 +64,7 @@ Component({
         isWarningLight: false,
       },
       {
+        id: '3',
         date: "10-11 14:22:30",
         mileage: 200,
         price: 8,
@@ -90,11 +76,7 @@ Component({
     ] as RecordType[],
     showCardArr: [] as ShowCardType[],
   },
-  observers: {
-    'fuelList': function (newVal: RecordType[]) {
-
-    }
-  },
+  observers: {},
   lifetimes: {
     created() {
       console.log('组件实例被创建');
@@ -118,43 +100,19 @@ Component({
     }
   },
   methods: {
-    onMileageChange(e: any) {
-      const mileage = Number(e.detail.value)
-      this.setData({
-        "newRecord.mileage": mileage
-      })
-    },
-    onPriceChange(e: any) {
-      const price = Number(e.detail.value)
-      this.setData({
-        "newRecord.price": price
-      })
-    },
-    onQuantityChange(e: any) {
-      const quantity = Number(e.detail.value)
-      this.setData({
-        "newRecord.quantity": quantity
-      })
-    },
-    onPayChange(e: any) {
-      const pay = Number(e.detail.value)
-      let quantity = pay / this.data.newRecord.price
+    onRecordChange(e: { detail: RecordType }) {
+
+      let newVal = e.detail
+
+      if (newVal.pay !== this.data.newRecord.pay) {
+        // pay changed
+        let quantity = newVal.pay / this.data.newRecord.price
+
+        newVal.quantity = Number(quantity.toFixed(2))
+      }
 
       this.setData({
-        'newRecord.pay': pay,
-        'newRecord.quantity': Number(quantity.toFixed(2)),
-      })
-    },
-    setAddFull(e: any) {
-      const value = e.currentTarget.dataset.value === 'true'
-      this.setData({
-        'newRecord.isAddFull': value
-      })
-    },
-    setWarningLight(e: any) {
-      const value = e.currentTarget.dataset.value === 'true'
-      this.setData({
-        'newRecord.isWarningLight': value
+        newRecord: newVal as RecordType,
       })
     },
     saveRecord() {
@@ -220,6 +178,7 @@ Component({
 
       this.setData({
         newRecord: {
+          id: String(new Date().getTime()),
           date: getNowString(),
           mileage: 0,
 
@@ -242,7 +201,7 @@ Component({
 
     calCost() {
       const showCardArr: ShowCardType[] = JSON.parse(JSON.stringify(this.data.fuelList));
-    
+
       // 1) 计算段距离 segments，segments[k] 表示 record[k] -> record[k+1] 的距离
       const n = showCardArr.length;
       const segments: number[] = new Array(Math.max(0, n - 1)).fill(0);
@@ -250,15 +209,15 @@ Component({
         segments[k] = showCardArr[k].mileage - showCardArr[k + 1].mileage;
         showCardArr[k].diffMile = segments[k];
       }
-      if (n > 0) showCardArr[n - 1].diffMile = showCardArr[n - 1].diffMile ?? 0;
-    
+      if (n > 0) showCardArr[n - 1].diffMile = showCardArr[n - 1].diffMile ? showCardArr[n - 1].diffMile : 0;
+
       // 初始化字段
       for (let i = 0; i < n; i++) {
         showCardArr[i].cost = 0;
         showCardArr[i].costLiter = 0;
         showCardArr[i].fuleConsumption = 0;
       }
-    
+
       // 辅助：把 totalLiters 按区间 s..e-1 的距离分配到每个段（写回到对应的 record[k]）
       function distribute(s: number, e: number, totalLiters: number) {
         const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0);
@@ -273,17 +232,17 @@ Component({
           showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
         }
       }
-    
+
       // 2) full -> full（优先）
       const fullIndexes: number[] = [];
       for (let i = 0; i < n; i++) if (showCardArr[i].isAddFull) fullIndexes.push(i);
       const covered = new Array(Math.max(0, n - 1)).fill(false); // 标记哪些段已由 full->full 覆盖
-    
+
       for (let fi = fullIndexes.length - 1; fi >= 1; fi--) {
         const oldIdx = fullIndexes[fi];     // 旧（时间早，索引大）
         const newIdx = fullIndexes[fi - 1]; // 新（时间晚，索引小）
         if (!(oldIdx > newIdx)) continue;
-    
+
         const s = newIdx;
         const e = oldIdx;
         // totalLiters 按 APP 逻辑：sum quantity for k = s .. e-1 （包含 newIdx 的 quantity，排除 oldIdx）
@@ -291,28 +250,28 @@ Component({
         distribute(s, e, totalLiters);
         for (let k = s; k < e; k++) covered[k] = true;
       }
-    
+
       // 3) warning -> warning（仅当两次 warning 之间没有 full；并按你要求 totalLiters = 旧的 warning 的 quantity）
       const warnIndexes: number[] = [];
       for (let i = 0; i < n; i++) if (showCardArr[i].isWarningLight) warnIndexes.push(i);
-    
+
       for (let wi = warnIndexes.length - 1; wi >= 1; wi--) {
         const oldIdx = warnIndexes[wi];     // 旧（时间早）
         const newIdx = warnIndexes[wi - 1]; // 新（时间晚）
         if (!(oldIdx > newIdx)) continue;
-    
+
         // 如果区间内存在 full -> 跳过（full->full 优先）
         const hasFull = showCardArr.slice(newIdx + 1, oldIdx).some(v => v.isAddFull);
         if (hasFull) continue;
-    
+
         const s = newIdx;
         const e = oldIdx;
         const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0);
         if (totalDistance <= 0) continue;
-    
+
         // **关键改动**：warning->warning 的总油量按 旧的 warning 的 quantity（oldIdx 的 quantity）
         const totalLiters = showCardArr[oldIdx].quantity || 0;
-    
+
         // 分配（跳过已被 full 覆盖的段）
         const totalDistanceForCalc = totalDistance; // 用整个区间 distance 计算 avg，然后跳过 covered 段写入
         if (totalDistanceForCalc > 0 && totalLiters > 0) {
@@ -328,21 +287,44 @@ Component({
           }
         }
       }
-    
-      // 写回
-      this.setData({ showCardArr });
-    },    
 
-    toModify() {
+      // 写回
+      this.setData({showCardArr});
+    },
+
+    toModify(e) {
+      const index = e.currentTarget.dataset.index; // 👈 Get the index
+      const record = this.data.showCardArr[index];   // 👈 Access the tapped item
+
       wx.navigateTo({
-        url: '/pages/modify/modify' 
+        url: '/pages/modify/modify',
+        events: {
+          updateRecord: (newRecord: RecordType) => {
+            let fuelList: RecordType[] = JSON.parse(JSON.stringify(this.data.fuelList))
+            fuelList = fuelList.map(item => {
+              if (item.id === newRecord.id) {
+                return newRecord
+              }
+              return item
+            })
+
+            this.setData({
+              fuelList: fuelList,
+            })
+
+            this.calCost()
+          },
+        },
+        success: function (res) {
+          res.eventChannel.emit('acceptDataFromOpenerPage', {record: record})
+        }
       })
     },
-    
+
 
     onChooseAvatar(e: any) {
-      const { avatarUrl } = e.detail
-      const { nickName } = this.data.userInfo
+      const {avatarUrl} = e.detail
+      const {nickName} = this.data.userInfo
       this.setData({
         "userInfo.avatarUrl": avatarUrl,
         hasUserInfo: nickName && avatarUrl && avatarUrl !== defaultAvatarUrl,
@@ -350,7 +332,7 @@ Component({
     },
     onInputChange(e: any) {
       const nickName = e.detail.value
-      const { avatarUrl } = this.data.userInfo
+      const {avatarUrl} = this.data.userInfo
       this.setData({
         "userInfo.nickName": nickName,
         hasUserInfo: nickName && avatarUrl && avatarUrl !== defaultAvatarUrl,
