@@ -18,8 +18,8 @@ function getNowString(): string {
   const formatNum = (num: number) => num.toString().padStart(2, '0')
 
   // 拼接格式（注意：你要的是“11-5”而非“11-05”，所以month和day不补零）
-  // return `${year}-${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
-  return `${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
+  return `${year}-${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
+  // return `${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
 }
 
 Component({
@@ -182,7 +182,7 @@ Component({
           date: getNowString(),
           mileage: 0,
 
-          price: 0,
+          price: 8,
           quantity: 0,
           pay: 0,
           isAddFull: false,
@@ -228,7 +228,7 @@ Component({
           const consumeLiters = segDist * (avgLPer100km / 100);
           showCardArr[k].fuleConsumption = Number(avgLPer100km.toFixed(2));
           showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2));
-          const price = showCardArr[k].price ?? 0;
+          const price = showCardArr[k].price ? showCardArr[k].price : 0;
           showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
         }
       }
@@ -282,7 +282,7 @@ Component({
             const consumeLiters = segDist * (avgLPer100km_warn / 100);
             showCardArr[k].fuleConsumption = Number(avgLPer100km_warn.toFixed(2));
             showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2));
-            const price = showCardArr[k].price ?? 0;
+            const price = showCardArr[k].price ? showCardArr[k].price : 0;
             showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
           }
         }
