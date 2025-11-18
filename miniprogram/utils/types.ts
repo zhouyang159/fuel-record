@@ -2,6 +2,7 @@
 export interface RecordType {
   id: string,
   date: string,
+  time: string,
   mileage: number,
   price: number,
   quantity: number,

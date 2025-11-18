@@ -5,6 +5,6 @@
   />
 
   <view style="margin-top: 10rpx;">
-    <button bindtap="updateRecord" type="default" plain="true">更新</button>
+    <button bindtap="updateRecord" type="default" plain="true">保存</button>
   </view>
 </view>

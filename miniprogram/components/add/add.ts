@@ -13,6 +13,18 @@ Component({
     }
   },
   methods: {
+    onDateChange: function(e) {
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
+      record.date = e.detail.value
+
+      this.triggerEvent('onRecordChange', record);
+    },
+    onTimeChange: function(e) {
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
+      record.time = e.detail.value
+
+      this.triggerEvent('onRecordChange', record);
+    },
     onMileageChange(e) {
       let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
       record.mileage = Number(e.detail.value);
@@ -49,5 +61,6 @@ Component({
 
       this.triggerEvent('onRecordChange', record);
     },
+    
   }
 });

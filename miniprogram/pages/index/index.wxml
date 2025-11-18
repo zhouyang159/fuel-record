@@ -3,27 +3,33 @@
   <view style="padding: 20rpx;">
 
     <!-- 新增模块 -->
-    <add
-      record="{{newRecord}}"
-      bind:onRecordChange="onRecordChange"
-    />
-
-    <view style="margin-top: 10rpx;">
-      <button bindtap="saveRecord" type="default" plain="true">保存</button>
+    <view style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx;">
+      <add
+        record="{{newRecord}}"
+        bind:onRecordChange="onRecordChange"
+      />
+      <view style="margin-top: 10rpx;">
+        <button bindtap="saveRecord" type="default" plain="true">保存</button>
+      </view>
     </view>
+
 
     <!-- 显示模块 -->
     <view style="margin-top: 30rpx;">
       <view>
-        <view 
-            wx:key="index" 
-            wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;" 
-            data-index="{{index}}"
-            bind:tap="toModify"
+        <view
+          wx:key="index"
+          wx:for="{{showCardArr}}"
+          style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;"
+          data-index="{{index}}"
+          bind:tap="toModifyPage"
         >
+          <view style="display: flex; justify-content: flex-end">
+            <icon type="cancel" catchtap="deleteRecord" data-id="{{item.id}}"></icon>
+          </view>
           <view style="display: flex; justify-content: space-between;">
             <view>
-              {{item.date}}
+              {{item.date}} {{item.time}}
             </view>
             <view>
               {{item.fuleConsumption}}升/百公里
@@ -51,12 +57,12 @@
             </view>
           </view>
 
-          <view style="margin-top: 10rpx; border-radius: 10rpx; padding: 10rpx; display: flex; justify-content: space-between; background-color: rgb(230, 245, 240);">
+          <view
+            style="margin-top: 10rpx; border-radius: 10rpx; padding: 10rpx; display: flex; justify-content: space-between; background-color: rgb(230, 245, 240);">
             <view>{{item.cost}}元/公里</view>
             <view>{{item.costLiter}}升</view>
             <view>+{{item.diffMile}}公里</view>
           </view>
-
         </view>
       </view>
     </view>

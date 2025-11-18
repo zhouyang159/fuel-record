@@ -1,7 +1,14 @@
 
-
-
 <view>
+  <view style="margin-bottom: 10rpx; display: flex">
+    <picker mode="date" value="{{record.date}}" start="2020-01-01" end="2030-12-31" bindchange="onDateChange">
+        加油时间：{{record.date}} 
+    </picker>
+    <picker style="margin-left: 10rpx" mode="time" value="{{record.time}}" bindchange="onTimeChange">
+        {{record.time}}
+    </picker>
+  </view>
+  
   <view style="display: flex;">
     当前里程：<input style="flex: 1" class="input" value="{{record.mileage}}" type="number" bindinput="onMileageChange" />
   </view>

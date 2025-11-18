@@ -19,7 +19,30 @@ function getNowString(): string {
 
   // 拼接格式（注意：你要的是“11-5”而非“11-05”，所以month和day不补零）
   return `${year}-${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
-  // return `${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
+}
+
+function getDateString(): string {
+  const date = new Date()
+
+  const year = date.getFullYear()
+  // 月份从0开始，需+1
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+
+  return `${year}-${month}-${day}`
+}
+
+function getTimeString(): string {
+  const date = new Date()
+
+  const hour = date.getHours()
+  const minute = date.getMinutes()
+  const second = date.getSeconds()
+
+  const formatNum = (num: number) => num.toString().padStart(2, '0')
+
+  // 拼接格式（注意：你要的是“11-5”而非“11-05”，所以month和day不补零）
+  return `${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
 }
 
 Component({
@@ -33,6 +56,9 @@ Component({
     canIUseNicknameComp: wx.canIUse('input.type.nickname'),
 
     newRecord: {
+      id: '-1',
+      date: getDateString(),
+      time: getTimeString(),
       mileage: 0,
 
       price: 8,
@@ -43,36 +69,36 @@ Component({
     } as RecordType,
 
     fuelList: [
-      {
-        id: '1',
-        date: "11-6 14:22:30",
-        mileage: 800,
-        price: 8,
-        quantity: 37.5,
-        pay: 300,
-        isAddFull: true,
-        isWarningLight: false,
-      },
-      {
-        id: '2',
-        date: "11-5 14:30:30",
-        mileage: 500,
-        price: 8,
-        quantity: 12.5,
-        pay: 100,
-        isAddFull: false,
-        isWarningLight: false,
-      },
-      {
-        id: '3',
-        date: "10-11 14:22:30",
-        mileage: 200,
-        price: 8,
-        quantity: 12.5,
-        pay: 100,
-        isAddFull: true,
-        isWarningLight: false,
-      },
+      // {
+      //   id: '1',
+      //   date: "11-6 14:22:30",
+      //   mileage: 800,
+      //   price: 8,
+      //   quantity: 37.5,
+      //   pay: 300,
+      //   isAddFull: true,
+      //   isWarningLight: false,
+      // },
+      // {
+      //   id: '2',
+      //   date: "11-5 14:30:30",
+      //   mileage: 500,
+      //   price: 8,
+      //   quantity: 12.5,
+      //   pay: 100,
+      //   isAddFull: false,
+      //   isWarningLight: false,
+      // },
+      // {
+      //   id: '3',
+      //   date: "10-11 14:22:30",
+      //   mileage: 200,
+      //   price: 8,
+      //   quantity: 12.5,
+      //   pay: 100,
+      //   isAddFull: true,
+      //   isWarningLight: false,
+      // },
     ] as RecordType[],
     showCardArr: [] as ShowCardType[],
   },
@@ -80,6 +106,13 @@ Component({
   lifetimes: {
     created() {
       console.log('组件实例被创建');
+
+      const fuelListStr = wx.getStorageSync('fuelList')
+      if (fuelListStr) {
+        this.setData({
+          fuelList: JSON.parse(fuelListStr)
+        })
+      }
     },
     attached() {
       console.log('组件实例进入页面节点树');
@@ -115,7 +148,24 @@ Component({
         newRecord: newVal as RecordType,
       })
     },
+    saveFuelList(fuelList: RecordType[]) {
+      this.setData({
+        fuelList: JSON.parse(JSON.stringify(fuelList))
+      })
+      wx.setStorageSync('fuelList', JSON.stringify(fuelList))
+    },
     saveRecord() {
+      if (this.data.fuelList.length > 0) {
+        if (this.data.newRecord.mileage <= this.data.fuelList[0].mileage) {
+          wx.showToast({
+            title: '当前里程不能小于最后一次记录的里程数',
+            icon: 'none',
+            duration: 2000
+          })
+          return
+        }
+      }
+
       if (this.data.newRecord.mileage <= 0) {
         wx.showToast({
           title: '里程不能为空',
@@ -152,34 +202,37 @@ Component({
         return
       }
 
-      if (this.data.fuelList[this.data.fuelList.length - 1].mileage >= this.data.newRecord.mileage) {
-        wx.showToast({
-          title: '当前里程不能小于最后一次记录的里程数',
-          icon: 'none',
-          duration: 2000
-        })
-        return
+      if (this.data.fuelList.length > 0) {
+        if (this.data.fuelList[this.data.fuelList.length - 1].mileage >= this.data.newRecord.mileage) {
+          wx.showToast({
+            title: '当前里程不能小于最后一次记录的里程数',
+            icon: 'none',
+            duration: 2000
+          })
+          return
+        }
       }
 
 
       let newRecord: RecordType = {
         ...this.data.newRecord,
-        date: getNowString(),
+        id: String(new Date().getTime()),
+        date: getDateString(),
+        time: getTimeString(),
       }
 
-      let newArr = [
+      let newFuelList = [
         newRecord,
         ...this.data.fuelList,
       ]
 
-      this.setData({
-        fuelList: JSON.parse(JSON.stringify(newArr))
-      })
+      this.saveFuelList(newFuelList)
 
       this.setData({
         newRecord: {
           id: String(new Date().getTime()),
-          date: getNowString(),
+          date: getDateString(),
+          time: getTimeString(),
           mileage: 0,
 
           price: 8,
@@ -197,6 +250,21 @@ Component({
       })
 
       this.calCost()
+    },
+    deleteRecord(e: any) {
+      const id = e.currentTarget.dataset.id;
+
+      let newFuelList = this.data.fuelList.filter(item => item.id !== id)
+
+      this.saveFuelList(newFuelList)
+
+      this.calCost()
+
+      wx.showToast({
+        title: '删除成功',
+        icon: 'none',
+        duration: 2000
+      })
     },
 
     calCost() {
@@ -292,7 +360,7 @@ Component({
       this.setData({showCardArr});
     },
 
-    toModify(e) {
+    toModifyPage(e: any) {
       const index = e.currentTarget.dataset.index; // 👈 Get the index
       const record = this.data.showCardArr[index];   // 👈 Access the tapped item
 
@@ -308,9 +376,7 @@ Component({
               return item
             })
 
-            this.setData({
-              fuelList: fuelList,
-            })
+            this.saveFuelList(fuelList)
 
             this.calCost()
           },
@@ -320,7 +386,6 @@ Component({
         }
       })
     },
-
 
     onChooseAvatar(e: any) {
       const {avatarUrl} = e.detail

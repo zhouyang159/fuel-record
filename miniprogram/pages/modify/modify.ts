@@ -8,7 +8,7 @@ Page({
     const eventChannel = this.getOpenerEventChannel()
     eventChannel.on('acceptDataFromOpenerPage', (data) => {
       const record = data.record as RecordType
-
+      
       this.setData({
         record: record,
       })
