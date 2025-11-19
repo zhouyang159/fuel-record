@@ -1,5 +1,4 @@
-
-import { RecordType } from "../../utils/types";
+import {RecordType} from "../../utils/types"
 
 Component({
   properties: {
@@ -13,54 +12,75 @@ Component({
     }
   },
   methods: {
-    onDateChange: function(e) {
-      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
+    onDateChange: function (e) {
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
       record.date = e.detail.value
 
-      this.triggerEvent('onRecordChange', record);
+      this.triggerEvent('onRecordChange', record)
     },
-    onTimeChange: function(e) {
-      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
+    onTimeChange: function (e) {
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
       record.time = e.detail.value
 
-      this.triggerEvent('onRecordChange', record);
+      this.triggerEvent('onRecordChange', record)
     },
     onMileageChange(e) {
-      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
-      record.mileage = Number(e.detail.value);
-      
-      this.triggerEvent('onRecordChange', record);
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
+      record.mileage = e.detail.value
+
+      this.triggerEvent('onRecordChange', record)
     },
     onPriceChange(e) {
-      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
-      record.price = e.detail.value;
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
 
-      this.triggerEvent('onRecordChange', record);
+      record.price = e.detail.value
+      
+      if (isNaN(e.detail.value) === false) {
+        if (isNaN(record.quantity) === false) {
+          // 价格和数量都是合法数字
+
+          let pay = Number(record.price) * Number(record.quantity)
+          record.pay = pay.toFixed(2)
+        }
+      }
+
+      this.triggerEvent('onRecordChange', record)
     },
     onQuantityChange(e) {
-      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
-      record.quantity = Number(e.detail.value);
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
+      record.quantity = e.detail.value
 
-      this.triggerEvent('onRecordChange', record);
+      if (isNaN(e.detail.value) === false) {
+        if (isNaN(record.price) === false) {
+          // 价格和数量都是合法数字
+
+          let pay = Number(record.price) * Number(record.quantity)
+          record.pay = pay.toFixed(2)
+        }
+      }
+
+      this.triggerEvent('onRecordChange', record)
     },
     onPayChange(e) {
-      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
-      record.pay = Number(e.detail.value);
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
+      record.pay = Number(e.detail.value)
 
-      this.triggerEvent('onRecordChange', record);
+      let quantity = record.pay / record.price
+      record.quantity = Number(quantity.toFixed(2))
+
+      this.triggerEvent('onRecordChange', record)
     },
     setAddFull(e) {
-      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
       record.isAddFull = e.currentTarget.dataset.value === 'true'
-      
-      this.triggerEvent('onRecordChange', record);
+
+      this.triggerEvent('onRecordChange', record)
     },
     setWarningLight(e) {
-      let record: RecordType = JSON.parse(JSON.stringify(this.data.record));
+      let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
       record.isWarningLight = e.currentTarget.dataset.value === 'true'
 
-      this.triggerEvent('onRecordChange', record);
+      this.triggerEvent('onRecordChange', record)
     },
-    
   }
-});
+})

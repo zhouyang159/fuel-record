@@ -1,7 +1,5 @@
-const app = getApp<IAppOption>()
-const defaultAvatarUrl = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
-
 import {RecordType, ShowCardType} from '../../utils/types'
+import {validateRecordNumber} from "../../utils/util";
 
 function getNowString(): string {
   const date = new Date()
@@ -37,33 +35,24 @@ function getTimeString(): string {
 
   const hour = date.getHours()
   const minute = date.getMinutes()
-  const second = date.getSeconds()
 
   const formatNum = (num: number) => num.toString().padStart(2, '0')
 
   // 拼接格式（注意：你要的是“11-5”而非“11-05”，所以month和day不补零）
-  return `${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
+  return `${formatNum(hour)}:${formatNum(minute)}`
 }
 
 Component({
   data: {
-    userInfo: {
-      avatarUrl: defaultAvatarUrl,
-      nickName: '',
-    },
-    hasUserInfo: false,
-    canIUseGetUserProfile: wx.canIUse('getUserProfile'),
-    canIUseNicknameComp: wx.canIUse('input.type.nickname'),
-
     newRecord: {
       id: '-1',
       date: getDateString(),
       time: getTimeString(),
-      mileage: 0,
+      mileage: '',
 
-      price: 8,
-      quantity: 0,
-      pay: 0,
+      price: '',
+      quantity: '',
+      pay: '',
       isAddFull: false,
       isWarningLight: false,
     } as RecordType,
@@ -101,6 +90,10 @@ Component({
       // },
     ] as RecordType[],
     showCardArr: [] as ShowCardType[],
+
+
+    nbFrontColor: '#000000',
+    nbBackgroundColor: '#ffffff',
   },
   observers: {},
   lifetimes: {
@@ -111,6 +104,12 @@ Component({
       if (fuelListStr) {
         this.setData({
           fuelList: JSON.parse(fuelListStr)
+        })
+      }
+      let initPrice = wx.getStorageSync('price')
+      if (initPrice) {
+        this.setData({
+          'newRecord.price': Number(initPrice)
         })
       }
     },
@@ -134,15 +133,7 @@ Component({
   },
   methods: {
     onRecordChange(e: { detail: RecordType }) {
-
       let newVal = e.detail
-
-      if (newVal.pay !== this.data.newRecord.pay) {
-        // pay changed
-        let quantity = newVal.pay / this.data.newRecord.price
-
-        newVal.quantity = Number(quantity.toFixed(2))
-      }
 
       this.setData({
         newRecord: newVal as RecordType,
@@ -154,9 +145,14 @@ Component({
       })
       wx.setStorageSync('fuelList', JSON.stringify(fuelList))
     },
-    saveRecord() {
+    addRecord() {
+
+      if(validateRecordNumber(this.data.fuelList, this.data.newRecord) === false) {
+        return
+      }
+
       if (this.data.fuelList.length > 0) {
-        if (this.data.newRecord.mileage <= this.data.fuelList[0].mileage) {
+        if (Number(this.data.newRecord.mileage) <= Number(this.data.fuelList[0].mileage)) {
           wx.showToast({
             title: '当前里程不能小于最后一次记录的里程数',
             icon: 'none',
@@ -165,61 +161,19 @@ Component({
           return
         }
       }
-
-      if (this.data.newRecord.mileage <= 0) {
-        wx.showToast({
-          title: '里程不能为空',
-          icon: 'none',
-          duration: 2000
-        })
-        return
-      }
-
-      if (this.data.newRecord.price <= 0) {
-        wx.showToast({
-          title: '单价不能为空',
-          icon: 'none',
-          duration: 2000
-        })
-        return
-      }
-
-      if (this.data.newRecord.quantity <= 0) {
-        wx.showToast({
-          title: '加油量不能为空',
-          icon: 'none',
-          duration: 2000
-        })
-        return
-      }
-
-      if (this.data.newRecord.pay <= 0) {
-        wx.showToast({
-          title: '机显金不能为空',
-          icon: 'none',
-          duration: 2000
-        })
-        return
-      }
-
-      if (this.data.fuelList.length > 0) {
-        if (this.data.fuelList[this.data.fuelList.length - 1].mileage >= this.data.newRecord.mileage) {
-          wx.showToast({
-            title: '当前里程不能小于最后一次记录的里程数',
-            icon: 'none',
-            duration: 2000
-          })
-          return
-        }
-      }
-
-
+      
       let newRecord: RecordType = {
         ...this.data.newRecord,
         id: String(new Date().getTime()),
         date: getDateString(),
         time: getTimeString(),
       }
+      
+      // check the newRecord.price if more than 2 decimal places, round to 2 decimal places
+      newRecord.price = String(Number(newRecord.price).toFixed(2))
+      newRecord.quantity = String(Number(newRecord.quantity).toFixed(2))
+      newRecord.pay = String(Number(newRecord.pay).toFixed(2))
+      
 
       let newFuelList = [
         newRecord,
@@ -233,37 +187,48 @@ Component({
           id: String(new Date().getTime()),
           date: getDateString(),
           time: getTimeString(),
-          mileage: 0,
-
-          price: 8,
-          quantity: 0,
-          pay: 0,
+          mileage: newRecord.mileage,
+          price: newRecord.price,
+          quantity: '',
+          pay: '',
           isAddFull: false,
           isWarningLight: false,
         }
       })
 
-      wx.showToast({
-        title: '保存成功',
-        icon: 'none',
-        duration: 2000
-      })
+      wx.setStorageSync('price', String(newRecord.price))
 
-      this.calCost()
+      wx
+        .showToast({
+          title: '保存成功',
+          icon: 'none',
+          duration: 2000
+        })
+        .then(() => {
+          this.calCost()
+        })
     },
     deleteRecord(e: any) {
-      const id = e.currentTarget.dataset.id;
 
-      let newFuelList = this.data.fuelList.filter(item => item.id !== id)
+      wx.showModal({
+        title: "确认要删除吗？",
+        success: (res) => {
+          if (res.confirm) {
+            const id = e.currentTarget.dataset.id;
 
-      this.saveFuelList(newFuelList)
+            let newFuelList = this.data.fuelList.filter(item => item.id !== id)
 
-      this.calCost()
+            this.saveFuelList(newFuelList)
 
-      wx.showToast({
-        title: '删除成功',
-        icon: 'none',
-        duration: 2000
+            this.calCost()
+
+            wx.showToast({
+              title: '删除成功',
+              icon: 'none',
+              duration: 2000
+            })
+          }
+        }
       })
     },
 
@@ -381,37 +346,10 @@ Component({
             this.calCost()
           },
         },
-        success: function (res) {
-          res.eventChannel.emit('acceptDataFromOpenerPage', {record: record})
-        }
-      })
-    },
-
-    onChooseAvatar(e: any) {
-      const {avatarUrl} = e.detail
-      const {nickName} = this.data.userInfo
-      this.setData({
-        "userInfo.avatarUrl": avatarUrl,
-        hasUserInfo: nickName && avatarUrl && avatarUrl !== defaultAvatarUrl,
-      })
-    },
-    onInputChange(e: any) {
-      const nickName = e.detail.value
-      const {avatarUrl} = this.data.userInfo
-      this.setData({
-        "userInfo.nickName": nickName,
-        hasUserInfo: nickName && avatarUrl && avatarUrl !== defaultAvatarUrl,
-      })
-    },
-    getUserProfile() {
-      // 推荐使用wx.getUserProfile获取用户信息，开发者每次通过该接口获取用户个人信息均需用户确认，开发者妥善保管用户快速填写的头像昵称，避免重复弹窗
-      wx.getUserProfile({
-        desc: '展示用户信息', // 声明获取用户个人信息后的用途，后续会展示在弹窗中，请谨慎填写
         success: (res) => {
-          console.log(res)
-          this.setData({
-            userInfo: res.userInfo,
-            hasUserInfo: true
+          res.eventChannel.emit('acceptDataFromOpenerPage', {
+            fuelList: this.data.fuelList,
+            record: record
           })
         }
       })

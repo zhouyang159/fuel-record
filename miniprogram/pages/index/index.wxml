@@ -1,5 +1,5 @@
 <!--index.wxml-->
-<scroll-view class="scrollarea" scroll-y type="list">
+<scroll-view class="scrollarea" scroll-y>
   <view style="padding: 20rpx;">
 
     <!-- 新增模块 -->
@@ -9,10 +9,18 @@
         bind:onRecordChange="onRecordChange"
       />
       <view style="margin-top: 10rpx;">
-        <button bindtap="saveRecord" type="default" plain="true">保存</button>
+        <button bindtap="addRecord" type="default" plain="true">保存</button>
       </view>
     </view>
 
+    <navigation-bar
+      title="{{nbTitle}}"
+      loading="{{nbLoading}}"
+      front-color="{{nbFrontColor}}"
+      background-color="{{nbBackgroundColor}}"
+      color-animation-duration="2000"
+      color-animation-timing-func="easeIn"
+    />
 
     <!-- 显示模块 -->
     <view style="margin-top: 30rpx;">
@@ -64,6 +72,13 @@
             <view>+{{item.diffMile}}公里</view>
           </view>
         </view>
+      </view>
+    </view>
+
+    <view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx">
+      <icon type="info"></icon>
+      <view>
+        需要两次加满才能计算出油耗
       </view>
     </view>
   </view>
