@@ -1,23 +1,6 @@
 import {RecordType, ShowCardType} from '../../utils/types'
 import {validateRecordNumber} from "../../utils/util";
 
-function getNowString(): string {
-  const date = new Date()
-
-  const year = date.getFullYear()
-  // 月份从0开始，需+1
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const hour = date.getHours()
-  const minute = date.getMinutes()
-  const second = date.getSeconds()
-
-  // 补零：不足两位的数字前加0（如1→01）
-  const formatNum = (num: number) => num.toString().padStart(2, '0')
-
-  // 拼接格式（注意：你要的是“11-5”而非“11-05”，所以month和day不补零）
-  return `${year}-${month}-${day} ${formatNum(hour)}:${formatNum(minute)}:${formatNum(second)}`
-}
 
 function getDateString(): string {
   const date = new Date()
@@ -41,6 +24,9 @@ function getTimeString(): string {
   // 拼接格式（注意：你要的是“11-5”而非“11-05”，所以month和day不补零）
   return `${formatNum(hour)}:${formatNum(minute)}`
 }
+
+
+const FUEL_LIST = 'fuel_list'
 
 Component({
   data: {
@@ -97,15 +83,30 @@ Component({
   },
   observers: {},
   lifetimes: {
-    created() {
+
+    created: function () {
       console.log('组件实例被创建');
 
-      const fuelListStr = wx.getStorageSync('fuelList')
-      if (fuelListStr) {
-        this.setData({
-          fuelList: JSON.parse(fuelListStr)
-        })
+      const app = getApp()
+
+      if (app.globalData.openid) {
+        // openid已经有了
+        this.fetchFuelListByOpenid()
+      } else {
+        // openid 还没有返回，设置回调
+        app.globalData.openidReadyCallback = () => {
+          this
+            .fetchFuelListByOpenid()
+            .then(list => {
+              this.setData({
+                fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
+              })
+
+              this.calCost()
+            })
+        }
       }
+
       let initPrice = wx.getStorageSync('price')
       if (initPrice) {
         this.setData({
@@ -139,15 +140,39 @@ Component({
         newRecord: newVal as RecordType,
       })
     },
-    saveFuelList(fuelList: RecordType[]) {
-      this.setData({
-        fuelList: JSON.parse(JSON.stringify(fuelList))
+    async removeAllRecordsByUserId(userId: string) {
+      const db = wx.cloud.database()
+
+      return await db.collection(FUEL_LIST)
+        .where({
+          userId: userId,
+        })
+        .remove();
+    },
+    async fetchFuelListByOpenid() {
+      const db = wx.cloud.database()
+
+      const openid = getApp().globalData.openid as string
+
+      wx.showLoading({
+        title: '',
       })
-      wx.setStorageSync('fuelList', JSON.stringify(fuelList))
+      let res = await db.collection(FUEL_LIST)
+        .where({
+          _openid: openid,
+        })
+        .get()
+      
+      wx.hideLoading()
+
+      res.data.sort((a, b) => {
+        return b.mileage - a.mileage
+      })
+
+      return res.data
     },
     addRecord() {
-
-      if(validateRecordNumber(this.data.fuelList, this.data.newRecord) === false) {
+      if (validateRecordNumber(this.data.fuelList, this.data.newRecord) === false) {
         return
       }
 
@@ -161,51 +186,60 @@ Component({
           return
         }
       }
-      
+
       let newRecord: RecordType = {
         ...this.data.newRecord,
         id: String(new Date().getTime()),
         date: getDateString(),
         time: getTimeString(),
       }
-      
+
       // check the newRecord.price if more than 2 decimal places, round to 2 decimal places
       newRecord.price = String(Number(newRecord.price).toFixed(2))
       newRecord.quantity = String(Number(newRecord.quantity).toFixed(2))
       newRecord.pay = String(Number(newRecord.pay).toFixed(2))
-      
 
-      let newFuelList = [
-        newRecord,
-        ...this.data.fuelList,
-      ]
 
-      this.saveFuelList(newFuelList)
+      const db = wx.cloud.database()
 
-      this.setData({
-        newRecord: {
-          id: String(new Date().getTime()),
-          date: getDateString(),
-          time: getTimeString(),
-          mileage: newRecord.mileage,
-          price: newRecord.price,
-          quantity: '',
-          pay: '',
-          isAddFull: false,
-          isWarningLight: false,
-        }
-      })
-
-      wx.setStorageSync('price', String(newRecord.price))
-
-      wx
-        .showToast({
-          title: '保存成功',
-          icon: 'none',
-          duration: 2000
+      db.collection(FUEL_LIST)
+        .add({
+          data: newRecord,
         })
         .then(() => {
-          this.calCost()
+
+          this.setData({
+            newRecord: {
+              id: String(new Date().getTime()),
+              date: getDateString(),
+              time: getTimeString(),
+              mileage: newRecord.mileage,
+              price: newRecord.price,
+              quantity: '',
+              pay: '',
+              isAddFull: false,
+              isWarningLight: false,
+            }
+          })
+
+          wx.setStorageSync('price', String(newRecord.price))
+
+          wx
+            .showToast({
+              title: '保存成功',
+              icon: 'none',
+              duration: 2000
+            })
+            .then(() => {
+              this.fetchFuelListByOpenid()
+                .then(list => {
+                  this.setData({
+                    fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
+                  })
+
+                  this.calCost()
+                })
+            })
         })
     },
     deleteRecord(e: any) {
@@ -216,17 +250,34 @@ Component({
           if (res.confirm) {
             const id = e.currentTarget.dataset.id;
 
-            let newFuelList = this.data.fuelList.filter(item => item.id !== id)
+            let deleteItem = this.data.fuelList.find(item => item.id === id)
+            if (!deleteItem) {
+              return
+            }
 
-            this.saveFuelList(newFuelList)
+            wx.cloud.database()
+              .collection(FUEL_LIST)
+              .where({
+                _id: deleteItem._id,
+              })
+              .remove()
+              .then(() => {
+                wx.showToast({
+                  title: '删除成功',
+                  icon: 'none',
+                  duration: 2000
+                })
 
-            this.calCost()
+                this.fetchFuelListByOpenid()
+                  .then(list => {
+                    this.setData({
+                      fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
+                    })
 
-            wx.showToast({
-              title: '删除成功',
-              icon: 'none',
-              duration: 2000
-            })
+                    this.calCost()
+                  })
+              })
+
           }
         }
       })
@@ -235,14 +286,17 @@ Component({
     calCost() {
       const showCardArr: ShowCardType[] = JSON.parse(JSON.stringify(this.data.fuelList));
 
-      // 1) 计算段距离 segments，segments[k] 表示 record[k] -> record[k+1] 的距离
+      // 1) 计算段距离 segments
       const n = showCardArr.length;
       const segments: number[] = new Array(Math.max(0, n - 1)).fill(0);
+
       for (let k = 0; k < n - 1; k++) {
-        segments[k] = showCardArr[k].mileage - showCardArr[k + 1].mileage;
+        const m1 = Number(showCardArr[k].mileage) || 0;
+        const m2 = Number(showCardArr[k + 1].mileage) || 0;
+        segments[k] = m1 - m2;
         showCardArr[k].diffMile = segments[k];
       }
-      if (n > 0) showCardArr[n - 1].diffMile = showCardArr[n - 1].diffMile ? showCardArr[n - 1].diffMile : 0;
+      if (n > 0) showCardArr[n - 1].diffMile = showCardArr[n - 1].diffMile || 0;
 
       // 初始化字段
       for (let i = 0; i < n; i++) {
@@ -251,49 +305,58 @@ Component({
         showCardArr[i].fuleConsumption = 0;
       }
 
-      // 辅助：把 totalLiters 按区间 s..e-1 的距离分配到每个段（写回到对应的 record[k]）
-      function distribute(s: number, e: number, totalLiters: number) {
+      // 辅助函数 distribute
+      const distribute = (s: number, e: number, totalLiters: number) => {
         const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0);
         if (totalDistance <= 0) return;
+
         const avgLPer100km = (totalLiters / totalDistance) * 100;
+
         for (let k = s; k < e; k++) {
           const segDist = segments[k] || 0;
           const consumeLiters = segDist * (avgLPer100km / 100);
+
           showCardArr[k].fuleConsumption = Number(avgLPer100km.toFixed(2));
           showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2));
-          const price = showCardArr[k].price ? showCardArr[k].price : 0;
-          showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
-        }
-      }
 
-      // 2) full -> full（优先）
+          const price = Number(showCardArr[k].price) || 0;
+          showCardArr[k].cost =
+            segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
+        }
+      };
+
+      // 2) full -> full
       const fullIndexes: number[] = [];
       for (let i = 0; i < n; i++) if (showCardArr[i].isAddFull) fullIndexes.push(i);
-      const covered = new Array(Math.max(0, n - 1)).fill(false); // 标记哪些段已由 full->full 覆盖
+
+      const covered = new Array(Math.max(0, n - 1)).fill(false);
 
       for (let fi = fullIndexes.length - 1; fi >= 1; fi--) {
-        const oldIdx = fullIndexes[fi];     // 旧（时间早，索引大）
-        const newIdx = fullIndexes[fi - 1]; // 新（时间晚，索引小）
+        const oldIdx = fullIndexes[fi];
+        const newIdx = fullIndexes[fi - 1];
         if (!(oldIdx > newIdx)) continue;
 
         const s = newIdx;
         const e = oldIdx;
-        // totalLiters 按 APP 逻辑：sum quantity for k = s .. e-1 （包含 newIdx 的 quantity，排除 oldIdx）
-        const totalLiters = showCardArr.slice(s, e).reduce((sum, v) => sum + (v.quantity || 0), 0);
+
+        const totalLiters = showCardArr
+          .slice(s, e)
+          .reduce((sum, v) => sum + (Number(v.quantity) || 0), 0);
+
         distribute(s, e, totalLiters);
+
         for (let k = s; k < e; k++) covered[k] = true;
       }
 
-      // 3) warning -> warning（仅当两次 warning 之间没有 full；并按你要求 totalLiters = 旧的 warning 的 quantity）
+      // 3) warning -> warning（仅当没有 full）
       const warnIndexes: number[] = [];
       for (let i = 0; i < n; i++) if (showCardArr[i].isWarningLight) warnIndexes.push(i);
 
       for (let wi = warnIndexes.length - 1; wi >= 1; wi--) {
-        const oldIdx = warnIndexes[wi];     // 旧（时间早）
-        const newIdx = warnIndexes[wi - 1]; // 新（时间晚）
+        const oldIdx = warnIndexes[wi];
+        const newIdx = warnIndexes[wi - 1];
         if (!(oldIdx > newIdx)) continue;
 
-        // 如果区间内存在 full -> 跳过（full->full 优先）
         const hasFull = showCardArr.slice(newIdx + 1, oldIdx).some(v => v.isAddFull);
         if (hasFull) continue;
 
@@ -302,21 +365,23 @@ Component({
         const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0);
         if (totalDistance <= 0) continue;
 
-        // **关键改动**：warning->warning 的总油量按 旧的 warning 的 quantity（oldIdx 的 quantity）
-        const totalLiters = showCardArr[oldIdx].quantity || 0;
+        const totalLiters = Number(showCardArr[oldIdx].quantity) || 0;
 
-        // 分配（跳过已被 full 覆盖的段）
-        const totalDistanceForCalc = totalDistance; // 用整个区间 distance 计算 avg，然后跳过 covered 段写入
-        if (totalDistanceForCalc > 0 && totalLiters > 0) {
-          const avgLPer100km_warn = (totalLiters / totalDistanceForCalc) * 100;
+        if (totalLiters > 0) {
+          const avg = (totalLiters / totalDistance) * 100;
+
           for (let k = s; k < e; k++) {
             if (covered[k]) continue;
+
             const segDist = segments[k] || 0;
-            const consumeLiters = segDist * (avgLPer100km_warn / 100);
-            showCardArr[k].fuleConsumption = Number(avgLPer100km_warn.toFixed(2));
+            const consumeLiters = segDist * (avg / 100);
+
+            showCardArr[k].fuleConsumption = Number(avg.toFixed(2));
             showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2));
-            const price = showCardArr[k].price ? showCardArr[k].price : 0;
-            showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
+
+            const price = Number(showCardArr[k].price) || 0;
+            showCardArr[k].cost =
+              segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0;
           }
         }
       }
@@ -333,17 +398,51 @@ Component({
         url: '/pages/modify/modify',
         events: {
           updateRecord: (newRecord: RecordType) => {
-            let fuelList: RecordType[] = JSON.parse(JSON.stringify(this.data.fuelList))
-            fuelList = fuelList.map(item => {
-              if (item.id === newRecord.id) {
-                return newRecord
-              }
-              return item
+            wx.showLoading({
+              title: '保存中...',
             })
 
-            this.saveFuelList(fuelList)
+            let _id = newRecord._id;
 
-            this.calCost()
+            delete newRecord._id;
+            delete newRecord._openid;
+
+
+            wx.cloud
+              .database()
+              .collection(FUEL_LIST)
+              .where({
+                _id: _id,
+              })
+              .update({
+                data: newRecord,
+              })
+              .then(() => {
+                wx.showToast({
+                  title: '修改成功',
+                  icon: 'none',
+                  duration: 2000
+                })
+
+                this.fetchFuelListByOpenid()
+                  .then(list => {
+                    this.setData({
+                      fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
+                    })
+
+                    this.calCost()
+                  })
+              })
+              .catch((err) => {
+                wx.showToast({
+                  title: '修改失败',
+                  icon: 'none',
+                  duration: 2000
+                })
+              })
+              .finally(() => {
+                wx.hideLoading()
+              })
           },
         },
         success: (res) => {

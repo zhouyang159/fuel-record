@@ -63,10 +63,15 @@ Component({
     },
     onPayChange(e) {
       let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
-      record.pay = Number(e.detail.value)
+      record.pay = e.detail.value
 
-      let quantity = record.pay / record.price
-      record.quantity = Number(quantity.toFixed(2))
+      if (isNaN(e.detail.value) === false) {
+        if (isNaN(record.price) === false) {
+          // 价格和实付金额都是合法数字
+          let quantity = Number(record.pay) / Number(record.price)
+          record.quantity = Number(quantity.toFixed(2))
+        }
+      }
 
       this.triggerEvent('onRecordChange', record)
     },

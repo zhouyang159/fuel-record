@@ -1,12 +1,11 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/logs/logs",
     "pages/modify/modify"
   ],
   "window": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "Weixin",
+    "navigationBarTitleText": "油耗记录",
     "navigationBarBackgroundColor": "#ffffff"
   },
   "style": "v2",

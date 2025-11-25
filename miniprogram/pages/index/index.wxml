@@ -13,17 +13,15 @@
       </view>
     </view>
 
-    <navigation-bar
-      title="{{nbTitle}}"
-      loading="{{nbLoading}}"
-      front-color="{{nbFrontColor}}"
-      background-color="{{nbBackgroundColor}}"
-      color-animation-duration="2000"
-      color-animation-timing-func="easeIn"
-    />
-
+    <view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx; margin-top: 20rpx;">
+      <icon type="info"></icon>
+      <view>
+        需要两次加满才能计算出油耗
+      </view>
+    </view>
+    
     <!-- 显示模块 -->
-    <view style="margin-top: 30rpx;">
+    <view style="margin-top: 20rpx;">
       <view>
         <view
           wx:key="index"
@@ -72,13 +70,6 @@
             <view>+{{item.diffMile}}公里</view>
           </view>
         </view>
-      </view>
-    </view>
-
-    <view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx">
-      <icon type="info"></icon>
-      <view>
-        需要两次加满才能计算出油耗
       </view>
     </view>
   </view>
