@@ -66,10 +66,13 @@ Component({
       record.pay = e.detail.value
 
       if (isNaN(e.detail.value) === false) {
-        if (isNaN(record.price) === false) {
-          // 价格和实付金额都是合法数字
-          let quantity = Number(record.pay) / Number(record.price)
-          record.quantity = Number(quantity.toFixed(2))
+        if (isNaN(record.quantity) === false) {
+          // 加油量和实付金额都是合法数字
+          // let quantity = Number(record.pay) / Number(record.price)
+          // record.quantity = Number(quantity.toFixed(2))
+          
+          let price = Number(record.pay) / Number(record.quantity)
+          record.price = price.toFixed(2)
         }
       }
 
