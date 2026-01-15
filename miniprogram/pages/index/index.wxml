@@ -16,7 +16,7 @@
     <view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx; margin-top: 20rpx;">
       <icon type="info"></icon>
       <view>
-        实际单价是通过计算得出不能修改，需要两次加满才能计算出油耗
+        需要两次加满才能计算出油耗
       </view>
     </view>
     
