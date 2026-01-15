@@ -32,15 +32,17 @@ Component({
     },
     onPriceChange(e) {
       let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
-
       record.price = e.detail.value
-      
-      if (isNaN(e.detail.value) === false) {
-        if (isNaN(record.quantity) === false) {
-          // 价格和数量都是合法数字
 
+      if (Number.parseFloat(record.price) > 0) {
+        if (Number.parseFloat(record.quantity) > 0) {
+          // 如果单价有 并且 加油量有，则计算实付金额
           let pay = Number(record.price) * Number(record.quantity)
-          record.pay = pay.toFixed(2)
+          record.pay = Number(pay).toFixed(2)
+        } else if (Number.parseFloat(record.pay) > 0) {
+          // 如果单价有 并且 实付金额有，则计算加油量
+          let quantity = Number(record.pay) / Number(record.price)
+          record.quantity = Number(quantity).toFixed(2)
         }
       }
 
@@ -50,29 +52,30 @@ Component({
       let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
       record.quantity = e.detail.value
 
-      if (isNaN(e.detail.value) === false) {
-        if (isNaN(record.price) === false) {
-          // 价格和数量都是合法数字
-
+      if (Number.parseFloat(record.quantity) > 0) {
+        if (Number.parseFloat(record.quantity) > 0) {
           let pay = Number(record.price) * Number(record.quantity)
-          record.pay = pay.toFixed(2)
+          record.pay = Number(pay).toFixed(2)
+        } else if (Number.parseFloat(record.pay) > 0) {
+          // 如果加油量有， 并且实付金额有，就计算单价
+          let price = Number(record.pay) / Number(record.quantity)
+          record.price = Number(price).toFixed(2)
         }
       }
-
+      
       this.triggerEvent('onRecordChange', record)
     },
     onPayChange(e) {
       let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
       record.pay = e.detail.value
 
-      if (isNaN(e.detail.value) === false) {
-        if (isNaN(record.quantity) === false) {
-          // 加油量和实付金额都是合法数字
-          // let quantity = Number(record.pay) / Number(record.price)
-          // record.quantity = Number(quantity.toFixed(2))
-          
+      if (Number.parseFloat(record.pay) > 0) {
+        if (Number.parseFloat(record.price) > 0) {
+          let quantity = Number(record.pay) / Number(record.price)
+          record.quantity = Number(quantity).toFixed(2)
+        } else if (Number.parseFloat(record.quantity) > 0) {
           let price = Number(record.pay) / Number(record.quantity)
-          record.price = price.toFixed(2)
+          record.price = Number(price).toFixed(2)
         }
       }
 

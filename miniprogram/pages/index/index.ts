@@ -277,7 +277,6 @@ Component({
                     this.calCost()
                   })
               })
-
           }
         }
       })

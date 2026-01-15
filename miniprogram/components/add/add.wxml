@@ -14,7 +14,7 @@
   </view>
 
   <view style="margin-top: 20rpx; display: flex; align-items: center;">
-    <view>实际单价：<input disabled class="input" value="{{record.price}}" type="digit" bindinput="onPriceChange" /></view>
+    <view>实际单价：<input class="input" value="{{record.price}}" type="digit" bindinput="onPriceChange" /></view>
     <view style="margin: 0 20rpx;">x</view>
     <view>加油量：<input class="input" value="{{record.quantity}}" type="digit" bindinput="onQuantityChange" /></view>
     <view style="margin: 0 20rpx;">=</view>
