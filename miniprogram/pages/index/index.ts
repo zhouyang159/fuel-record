@@ -1,5 +1,7 @@
-import {RecordType, ShowCardType} from '../../utils/types'
-import {validateRecordNumber} from "../../utils/util";
+import { RecordType, ShowCardType } from '../../utils/types'
+import { validateRecordNumber } from "../../utils/util"
+import Dialog from '../../miniprogram_npm/@vant/weapp/dialog/dialog'
+
 
 
 function getDateString(): string {
@@ -80,6 +82,8 @@ Component({
 
     nbFrontColor: '#000000',
     nbBackgroundColor: '#ffffff',
+
+    swipeCellId: -1 as number,
   },
   observers: {},
   lifetimes: {
@@ -155,14 +159,14 @@ Component({
       const openid = getApp().globalData.openid as string
 
       wx.showLoading({
-        title: '',
+        title: '加载中...',
       })
       let res = await db.collection(FUEL_LIST)
         .where({
           _openid: openid,
         })
         .get()
-      
+
       wx.hideLoading()
 
       res.data.sort((a, b) => {
@@ -231,26 +235,46 @@ Component({
               duration: 2000
             })
             .then(() => {
-              this.fetchFuelListByOpenid()
-                .then(list => {
-                  this.setData({
-                    fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
-                  })
+              setTimeout(() => {
+                this.fetchFuelListByOpenid()
+                  .then(list => {
+                    this.setData({
+                      fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
+                    })
 
-                  this.calCost()
-                })
+                    this.calCost()
+                  })
+              }, 500);
+
             })
         })
     },
-    deleteRecord(e: any) {
 
-      wx.showModal({
-        title: "确认要删除吗？",
-        success: (res) => {
-          if (res.confirm) {
-            const id = e.currentTarget.dataset.id;
+    onSwipeCellOpen(event) {
+      const id = event.currentTarget.dataset.id;
 
-            let deleteItem = this.data.fuelList.find(item => item.id === id)
+      this.setData({ swipeCellId: id });
+    },
+    onSwipeCellClose(event) {
+
+      const clickId = event.currentTarget.dataset.id;
+
+
+      const { position, instance } = event.detail;
+      switch (position) {
+        case 'cell':
+          instance.close();
+
+          break;
+        case 'right':
+          instance.close();
+
+          Dialog.confirm({
+            message: '确定删除吗？',
+          }).then(() => {
+            instance.close();
+
+            let deleteItem = this.data.fuelList.find(item => item.id === clickId)
             if (!deleteItem) {
               return
             }
@@ -277,9 +301,24 @@ Component({
                     this.calCost()
                   })
               })
-          }
+
+          });
+          break;
+      }
+
+      this.setData({ swipeCellId: -1 });
+    },
+    closeAllSwipeCells() {
+      // 遍历所有 SwipeCell 并关闭
+      const len = this.data.showCardArr.length;
+      for (let i = 0; i < len; i++) {
+        const instance = this.selectComponent(`#swipe-${i}`);
+        if (instance) {
+          instance.close();
         }
-      })
+      }
+
+      this.setData({ swipeCellId: -1 });
     },
 
     calCost() {
@@ -301,7 +340,7 @@ Component({
       for (let i = 0; i < n; i++) {
         showCardArr[i].cost = 0;
         showCardArr[i].costLiter = 0;
-        showCardArr[i].fuleConsumption = 0;
+        showCardArr[i].fuelConsumption = 0;
       }
 
       // 辅助函数 distribute
@@ -315,7 +354,7 @@ Component({
           const segDist = segments[k] || 0;
           const consumeLiters = segDist * (avgLPer100km / 100);
 
-          showCardArr[k].fuleConsumption = Number(avgLPer100km.toFixed(2));
+          showCardArr[k].fuelConsumption = Number(avgLPer100km.toFixed(2));
           showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2));
 
           const price = Number(showCardArr[k].price) || 0;
@@ -375,7 +414,7 @@ Component({
             const segDist = segments[k] || 0;
             const consumeLiters = segDist * (avg / 100);
 
-            showCardArr[k].fuleConsumption = Number(avg.toFixed(2));
+            showCardArr[k].fuelConsumption = Number(avg.toFixed(2));
             showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2));
 
             const price = Number(showCardArr[k].price) || 0;
@@ -386,71 +425,96 @@ Component({
       }
 
       // 写回
-      this.setData({showCardArr});
+      this.setData({ showCardArr });
     },
 
     toModifyPage(e: any) {
-      const index = e.currentTarget.dataset.index; // 👈 Get the index
-      const record = this.data.showCardArr[index];   // 👈 Access the tapped item
+      const navigate = () => {
+        const index = e.currentTarget.dataset.index; // 👈 Get the index
+        const record = this.data.showCardArr[index];   // 👈 Access the tapped item
 
-      wx.navigateTo({
-        url: '/pages/modify/modify',
-        events: {
-          updateRecord: (newRecord: RecordType) => {
-            wx.showLoading({
-              title: '保存中...',
-            })
-
-            let _id = newRecord._id;
-
-            delete newRecord._id;
-            delete newRecord._openid;
-
-
-            wx.cloud
-              .database()
-              .collection(FUEL_LIST)
-              .where({
-                _id: _id,
+        wx.navigateTo({
+          url: '/pages/modify/modify',
+          events: {
+            updateRecord: (newRecord: RecordType) => {
+              wx.showLoading({
+                title: '保存中...',
               })
-              .update({
-                data: newRecord,
-              })
-              .then(() => {
-                wx.showToast({
-                  title: '修改成功',
-                  icon: 'none',
-                  duration: 2000
+
+              let _id = newRecord._id;
+
+              delete newRecord._id;
+              delete newRecord._openid;
+
+
+              wx.cloud
+                .database()
+                .collection(FUEL_LIST)
+                .where({
+                  _id: _id,
                 })
-
-                this.fetchFuelListByOpenid()
-                  .then(list => {
-                    this.setData({
-                      fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
-                    })
-
-                    this.calCost()
+                .update({
+                  data: newRecord,
+                })
+                .then(() => {
+                  wx.showToast({
+                    title: '修改成功',
+                    icon: 'none',
+                    duration: 2000
                   })
-              })
-              .catch((err) => {
-                wx.showToast({
-                  title: '修改失败',
-                  icon: 'none',
-                  duration: 2000
+
+                  this.fetchFuelListByOpenid()
+                    .then(list => {
+                      this.setData({
+                        fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
+                      })
+
+                      this.calCost()
+                    })
                 })
-              })
-              .finally(() => {
-                wx.hideLoading()
-              })
+                .catch((err) => {
+                  wx.showToast({
+                    title: '修改失败',
+                    icon: 'none',
+                    duration: 2000
+                  })
+                })
+                .finally(() => {
+                  wx.hideLoading()
+                })
+            },
           },
-        },
-        success: (res) => {
-          res.eventChannel.emit('acceptDataFromOpenerPage', {
-            fuelList: this.data.fuelList,
-            record: record
-          })
+          success: (res) => {
+            res.eventChannel.emit('acceptDataFromOpenerPage', {
+              fuelList: this.data.fuelList,
+              record: record
+            })
+          }
+        })
+      }
+      if (this.data.swipeCellId === -1) {
+        // 没有打开的 SwipeCell，可以正常跳转
+        console.log('没有打开的 SwipeCell，可以正常跳转');
+
+        navigate()
+      } else {
+        // 有打开的 SwipeCell，先关闭它
+        console.log('有打开的 SwipeCell.  不跳转');
+
+        if (this.data.swipeCellId === e.currentTarget.dataset.id) {
+          // 点击了同一个打开的 SwipeCell，关闭它但不跳转
+
+          console.log('点击了同一个打开的 SwipeCell，关闭它但不跳转');
+        } else {
+          // 点击了不同的 SwipeCell，先关闭所有 SwipeCell
+          console.log('点击了不同的 SwipeCell，先关闭所有 SwipeCell, 然后再跳转');
+          this.closeAllSwipeCells()
+          // 等待动画完成后再跳转
+          setTimeout(() => {
+            navigate()
+          }, 10);
         }
-      })
+      }
     },
   },
 })

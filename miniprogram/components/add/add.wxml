@@ -14,15 +14,23 @@
   </view>
 
   <view style="margin-top: 20rpx; display: flex; align-items: center;">
-    <view>实际单价：<input class="input" value="{{record.price}}" type="digit" bindinput="onPriceChange" /></view>
+    <view>机显单价：<input class="input" value="{{record.price}}" type="digit" bindinput="onPriceChange" /></view>
     <view style="margin: 0 20rpx;">x</view>
     <view>加油量：<input class="input" value="{{record.quantity}}" type="digit" bindinput="onQuantityChange" /></view>
     <view style="margin: 0 20rpx;">=</view>
-    <view>实付金额：<input class="input" value="{{record.pay}}" type="digit" bindinput="onPayChange" /></view>
+    <view>机显金额：<input class="input" value="{{record.pay}}" type="digit" bindinput="onPayChange" /></view>
+  </view>
+
+    <view style="margin-top: 20rpx; display: flex; align-items: center;">
+    <view>实际单价：<input class="input disabled" disabled="{{true}}" value="{{record.realPrice}}" type="digit" bindinput="onRealPriceChange" /></view>
+    <view style="margin: 0 20rpx;"></view>
+    <view>优惠金额：<input class="input" value="{{record.discountAmount}}" type="digit" bindinput="onDiscountAmountChange"/></view>
+    <view style="margin: 0 20rpx;"></view>
+    <view>实付金额：<input class="input" value="{{record.realPay}}" type="digit" bindinput="onRealPayChange" /></view>
   </view>
 
   <view>
-    <view style="display: flex;margin-top: 20rpx;">
+    <view style="display: flex;margin-top: 30rpx;">
       <view>是否加满？</view>
       <view>
         <button bindtap="setAddFull" data-value="true" type="{{ record.isAddFull ? 'primary' : 'default'}}" size="mini">加满</button>

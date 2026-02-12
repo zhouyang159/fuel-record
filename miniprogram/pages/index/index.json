@@ -1,5 +1,8 @@
 {
   "usingComponents": {
-    "add": "/components/add/add"
+    "add": "/components/add/add",
+    "van-button": "@vant/weapp/button/index",
+    "van-swipe-cell": "@vant/weapp/swipe-cell/index",
+    "van-dialog": "@vant/weapp/dialog/index"
   }
 }
