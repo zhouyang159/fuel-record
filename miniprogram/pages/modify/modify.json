@@ -1,5 +1,6 @@
 {
   "usingComponents": {
-    "add": "/components/add/add"
+    "add": "/components/add/add",
+    "van-button": "@vant/weapp/button/index"
   }
 }

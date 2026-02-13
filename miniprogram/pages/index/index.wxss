@@ -9,3 +9,12 @@ page {
   overflow-y: hidden;
 }
 
+.delete_btn {
+  width: 80px;
+  height: 100%;
+  background: red;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
