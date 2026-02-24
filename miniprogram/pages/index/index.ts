@@ -18,7 +18,7 @@ function getTimeString(): string {
   return `${formatNum(hour)}:${formatNum(minute)}`
 }
 
-const FUEL_LIST = 'fuel_list'
+const FUEL_LIST_TABLE = 'fuel_list_dev'
 const CAR_LOAD_TIMEOUT = 10000
 const POLL_INTERVAL = 300
 
@@ -73,6 +73,11 @@ Page({
   onShow() {
     console.log('组件实例进入页面显示')
     this.setCurrentCar()
+    this.fetchFuelListByOpenid()
+      .then(list => {
+        this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
+        this.calCost()
+      })
   },
 
   initCarDataListener() {
@@ -96,6 +101,11 @@ Page({
     if (!app.globalData.carReadyCallback) {
       app.globalData.carReadyCallback = () => {
         this.setCurrentCar()
+        this.fetchFuelListByOpenid()
+          .then(list => {
+            this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
+            this.calCost()
+          })
       }
     }
 
@@ -116,32 +126,27 @@ Page({
     })
   },
 
-  // 👇 Update toCarsPage to listen for car change events
   toCarsPage() {
     wx.navigateTo({
       url: '/pages/cars/cars',
-      // Listen for car change event from cars page
-      events: {
-        carChanged: () => {
-        }
-      }
     })
   },
 
-  // 👇 Keep all your original methods (no changes needed)
   onRecordChange(e: { detail: RecordType }) {
     let newVal = e.detail
     this.setData({ newRecord: newVal as RecordType })
   },
   async removeAllRecordsByUserId(userId: string) {
     const db = wx.cloud.database()
-    return await db.collection(FUEL_LIST).where({ userId }).remove()
+    return await db.collection(FUEL_LIST_TABLE).where({ userId }).remove()
   },
   async fetchFuelListByOpenid() {
     const db = wx.cloud.database()
     const openid = getApp().globalData.openid as string
+    const carId = getApp().globalData.currentCarId
+    if (!carId) return []
     wx.showLoading({ title: '加载中...' })
-    let res = await db.collection(FUEL_LIST).where({ _openid: openid }).get()
+    let res = await db.collection(FUEL_LIST_TABLE).where({ _openid: openid, carId }).get()
     wx.hideLoading()
     res.data.sort((a, b) => b.mileage - a.mileage)
     return res.data
@@ -164,7 +169,7 @@ Page({
     newRecord.pay = String(Number(newRecord.pay).toFixed(2))
 
     const db = wx.cloud.database()
-    db.collection(FUEL_LIST).add({ data: newRecord })
+    db.collection(FUEL_LIST_TABLE).add({ data: { ...newRecord, carId: getApp().globalData.currentCarId } })
       .then(() => {
         this.setData({
           newRecord: {
@@ -207,7 +212,7 @@ Page({
           instance.close()
           let deleteItem = this.data.fuelList.find(item => item.id === clickId)
           if (!deleteItem) return
-          wx.cloud.database().collection(FUEL_LIST).where({ _id: deleteItem._id }).remove()
+          wx.cloud.database().collection(FUEL_LIST_TABLE).where({ _id: deleteItem._id }).remove()
             .then(() => {
               wx.showToast({ title: '删除成功', icon: 'none', duration: 2000 })
               this.fetchFuelListByOpenid()
@@ -318,7 +323,7 @@ Page({
             let _id = newRecord._id
             delete newRecord._id
             delete newRecord._openid
-            wx.cloud.database().collection(FUEL_LIST).where({ _id }).update({ data: newRecord })
+            wx.cloud.database().collection(FUEL_LIST_TABLE).where({ _id }).update({ data: newRecord })
               .then(() => {
                 wx.showToast({ title: '修改成功', icon: 'none', duration: 2000 })
                 this.fetchFuelListByOpenid()
