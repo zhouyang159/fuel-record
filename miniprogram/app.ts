@@ -1,9 +1,12 @@
-// app.ts
 App<IAppOption>({
   globalData: {
     env: 'cloud1-8g65ecjm393c67f1',
     openid: '',
     openidReadyCallback: null,
+    carReadyCallback: null, // Add this callback
+    CAR_LIST: 'car_list',
+    currentCarId: null,
+    cars: [] as any[],
   },
   onLaunch() {
     if (!wx.cloud) {
@@ -14,20 +17,14 @@ App<IAppOption>({
         traceUser: true,
       });
 
-      
-      wx.showLoading({
-        title: ''
-      })
+      wx.showLoading({ title: '' })
       wx.cloud.callFunction({
-        name: 'getOpenID', // 刚才新建的云函数名称
+        name: 'getOpenID',
         success: (res) => {
           this.globalData.openid = res.result.openid;
-
-          // 如果页面已经设置了回调，则执行
           if (this.globalData.openidReadyCallback) {
             this.globalData.openidReadyCallback();
           }
-          
           wx.hideLoading();
         },
         fail: (err) => {
@@ -35,6 +32,20 @@ App<IAppOption>({
           wx.hideLoading();
         },
       });
+
+      // Update this part to trigger callback
+      wx.cloud.database()
+        .collection(this.globalData.CAR_LIST)
+        .get()
+        .then(res => {
+          this.globalData.cars = res.data
+          this.globalData.currentCarId = res.data.length > 0 ? res.data[0]._id : null
+          
+          // Trigger callback when car data is loaded
+          if (this.globalData.carReadyCallback) {
+            this.globalData.carReadyCallback()
+          }
+        })
     }
   },
 })

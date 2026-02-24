@@ -1,11 +1,12 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/modify/modify"
+    "pages/modify/modify",
+    "pages/cars/cars"
   ],
   "window": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "油耗记录",
+    "navigationBarTitleText": "油账通",
     "navigationBarBackgroundColor": "#ffffff"
   },
   "style": "v2",

@@ -1,0 +1,10 @@
+<view>
+    <view>
+        <view wx:for="{{cars}}" wx:key="id" style="border: 1rpx solid gray; margin: 10rpx; padding: 10rpx;">
+            <text class="car-icon" bind:tap="setCurrentCar" data-id="{{item._id}}">🚗{{item.name}}</text>
+            <van-button type="danger" size="mini" bind:tap="deleteCar" data-id="{{item._id}}">删除</van-button>
+        </view>
+
+        <van-button size="large" bind:tap="addCar">添加车辆</van-button>
+    </view>
+</view>

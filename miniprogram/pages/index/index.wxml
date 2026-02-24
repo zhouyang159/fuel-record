@@ -1,66 +1,62 @@
-<!-- index.wxml -->
-<scroll-view class="scrollarea" scroll-y>
-	<view style="padding: 20rpx;" bind:tap="closeAllSwipeCells">
-		<!-- 新增模块 -->
-		<view style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx;">
-			<add record="{{newRecord}}" bind:onRecordChange="onRecordChange" />
-			<view style="margin-top: 10rpx; display: flex; justify-content: center">
-				<van-button type="info" bindtap="addRecord">保存</van-button>
-			</view>
-		</view>
-		<view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx; margin-top: 20rpx;">
-			<icon type="info" />
-			<view>需要两次加满才能计算出油耗</view>
-		</view>
-		<!-- 显示模块 -->
-		<view style="margin-top: 20rpx;">
-			<view>
-				<view wx:key="index" wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;">
-					<van-swipe-cell
-					 id="swipe-{{index}}"
-					 data-id="{{item.id}}"
-					 right-width="{{ 80 }}"
-					 async-close
-					 bind:open="onSwipeCellOpen"
-					 bind:close="onSwipeCellClose"
-					>
-						<van-cell-group>
-							<view data-index="{{index}}" data-id="{{item.id}}" bind:tap="toModifyPage">
-								<view style="display: flex; justify-content: space-between;">
-									<view>{{item.date}} {{item.time}}</view>
-									<view>{{item.fuelConsumption}}升/百公里</view>
-									<view>{{item.mileage}}公里</view>
-								</view>
-								<view style="background-color: rgb(242, 242, 242);">
-									<view style="display: flex; justify-content: space-between;">
-										<view>{{item.pay}}元</view>
-										<view>{{item.price}}元/升</view>
-										<view>+{{item.quantity}}升</view>
-									</view>
-									<view style="display: flex;">
-										<view wx:if="{{item.isAddFull}}" style="color: red;">加满</view>
-										<view wx:if="{{item.isWarningLight}}" style="color: red; margin-left: 10rpx;">
-											灯亮
-										</view>
-									</view>
-								</view>
-								<view style="margin-top: 10rpx; border-radius: 10rpx; padding: 10rpx; display: flex; justify-content: space-between; background-color: rgb(230, 245, 240);">
-									<view>{{item.cost}}元/公里</view>
-									<view>{{item.costLiter}}升</view>
-									<view>+{{item.diffMile}}公里</view>
-								</view>
-							</view>
-						</van-cell-group>
-						<view slot="right" style="height: 100%">
-							<view class="delete_btn">
-								删除
-							</view>
-						</view>
-					</van-swipe-cell>
-				</view>
-			</view>
-		</view>
-		<van-dialog id="van-dialog" />
+<view>
+	<view bind:tap="toCarsPage" style="font-size: 32rpx; font-weight: bold; padding: 20rpx; text-align: center;">
+		{{currentCar.name}}
 	</view>
-</scroll-view>
-
+	<scroll-view class="scrollarea" scroll-y>
+					<view style="padding: 20rpx;" bind:tap="closeAllSwipeCells">
+									<!-- 新增模块 -->
+									<view style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx;">
+													<add record="{{newRecord}}" bind:onRecordChange="onRecordChange" />
+													<view style="margin-top: 10rpx; display: flex; justify-content: center">
+																	<van-button type="info" bindtap="addRecord">保存</van-button>
+													</view>
+									</view>
+									<view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx; margin-top: 20rpx;">
+													<icon type="info" />
+													<view>需要两次加满才能计算出油耗</view>
+									</view>
+									<!-- 显示模块 -->
+									<view style="margin-top: 20rpx;">
+													<view>
+																	<view wx:key="index" wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;">
+																					<van-swipe-cell id="swipe-{{index}}" data-id="{{item.id}}" right-width="{{ 80 }}" async-close bind:open="onSwipeCellOpen" bind:close="onSwipeCellClose">
+																									<van-cell-group>
+																													<view data-index="{{index}}" data-id="{{item.id}}" bind:tap="toModifyPage">
+																																	<view style="display: flex; justify-content: space-between;">
+																																					<view>{{item.date}} {{item.time}}</view>
+																																					<view>{{item.fuelConsumption}}升/百公里</view>
+																																					<view>{{item.mileage}}公里</view>
+																																	</view>
+																																	<view style="background-color: rgb(242, 242, 242);">
+																																					<view style="display: flex; justify-content: space-between;">
+																																									<view>{{item.pay}}元</view>
+																																									<view>{{item.price}}元/升</view>
+																																									<view>+{{item.quantity}}升</view>
+																																					</view>
+																																					<view style="display: flex;">
+																																									<view wx:if="{{item.isAddFull}}" style="color: red;">
+																																													加满
+																																									</view>
+																																									<view wx:if="{{item.isWarningLight}}" style="color: red; margin-left: 10rpx;">
+																																													灯亮
+																																									</view>
+																																					</view>
+																																	</view>
+																																	<view style="margin-top: 10rpx; border-radius: 10rpx; padding: 10rpx; display: flex; justify-content: space-between; background-color: rgb(230, 245, 240);">
+																																					<view>{{item.cost}}元/公里</view>
+																																					<view>{{item.costLiter}}升</view>
+																																					<view>+{{item.diffMile}}公里</view>
+																																	</view>
+																													</view>
+																									</van-cell-group>
+																									<view slot="right" style="height: 100%">
+																													<view class="delete_btn">删除</view>
+																									</view>
+																					</van-swipe-cell>
+																	</view>
+													</view>
+									</view>
+									<van-dialog id="van-dialog" />
+					</view>
+	</scroll-view>
+</view>
