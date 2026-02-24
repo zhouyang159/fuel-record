@@ -21,7 +21,7 @@ Page({
 
   addCar() {
     if (this.data.cars.length >= 5) {
-      wx.showToast({ title: '最多只能5辆车', icon: 'error' })
+      wx.showToast({ title: '最多添加5辆车', icon: 'error' })
       return
     }
 
@@ -33,7 +33,7 @@ Page({
       .then(res => {
         this.fetchCarList()
         wx.showToast({ title: '添加成功', icon: 'success' })
-        
+
         // Update global cars after add
         app.globalData.cars = this.data.cars
       })
@@ -57,26 +57,15 @@ Page({
       .doc(carId)
       .remove()
       .then(() => {
-        wx.hideLoading()
         wx.showToast({ title: '删除成功', icon: 'success' })
-        
-        this.fetchCarList().then(() => {
-          // Update global cars after delete
-          app.globalData.cars = this.data.cars
-          
-          // Reset currentCarId if deleted car was selected
-          if (app.globalData.currentCarId === carId) {
-            app.globalData.currentCarId = this.data.cars.length > 0 ? this.data.cars[0]._id : null
-          }
 
-          // 👇 Trigger carChanged event
-          const eventChannel = this.getOpenerEventChannel()
-          eventChannel.emit('carChanged')
-        })
+        this.fetchCarList()
       })
       .catch(() => {
-        wx.hideLoading()
         wx.showToast({ title: '删除失败', icon: 'error' })
+      })
+      .finally(() => {
+        wx.hideLoading()
       })
   },
 })
