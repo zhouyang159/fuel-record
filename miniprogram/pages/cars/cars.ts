@@ -1,5 +1,5 @@
 const app = getApp()
-const CAR_LIST = app.globalData.CAR_LIST
+const CAR_LIST_TABLE = app.globalData.CAR_LIST_TABLE
 
 Page({
   data: {
@@ -12,7 +12,7 @@ Page({
 
   fetchCarList() {
     wx.cloud.database()
-      .collection(CAR_LIST)
+      .collection(CAR_LIST_TABLE)
       .get()
       .then(res => {
         this.setData({ cars: res.data })
@@ -28,7 +28,7 @@ Page({
     let newCar = { name: `车辆${this.data.cars.length + 1}` }
 
     wx.cloud.database()
-      .collection(CAR_LIST)
+      .collection(CAR_LIST_TABLE)
       .add({ data: newCar })
       .then(res => {
         this.fetchCarList()
@@ -53,7 +53,7 @@ Page({
     wx.showLoading({ title: '删除中...' })
 
     wx.cloud.database()
-      .collection(CAR_LIST)
+      .collection(CAR_LIST_TABLE)
       .doc(carId)
       .remove()
       .then(() => {

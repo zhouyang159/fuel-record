@@ -1,6 +1,6 @@
 <view>
-	<view bind:tap="toCarsPage" style="font-size: 32rpx; font-weight: bold; padding: 20rpx; text-align: center;">
-		{{currentCar.name}}
+	<view bind:tap="toCarsPage" style="font-size: 32rpx; font-weight: bold; padding: 20rpx;">
+		{{currentCar.name}} →
 	</view>
 	<scroll-view class="scrollarea" scroll-y>
 					<view style="padding: 20rpx;" bind:tap="closeAllSwipeCells">

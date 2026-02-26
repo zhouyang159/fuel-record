@@ -44,7 +44,6 @@ Page({
     swipeCellId: -1 as number,
   },
   onLoad() {
-    console.log('组件实例被创建');
     const app = getApp()
 
     if (app.globalData.openid) {
@@ -71,7 +70,6 @@ Page({
     this.calCost()
   },
   onShow() {
-    console.log('组件实例进入页面显示')
     this.setCurrentCar()
     this.fetchFuelListByOpenid()
       .then(list => {
