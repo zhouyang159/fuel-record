@@ -1,10 +1,41 @@
-<view>
-    <view>
-        <view wx:for="{{cars}}" wx:key="id" style="border: 1rpx solid gray; margin: 10rpx; padding: 10rpx;">
-            <text class="car-icon" bind:tap="setCurrentCar" data-id="{{item._id}}">🚗{{item.name}}</text>
-            <van-button type="danger" size="mini" bind:tap="deleteCar" data-id="{{item._id}}">删除</van-button>
-        </view>
-
-        <van-button size="large" bind:tap="addCar">添加车辆</van-button>
+<view class="cars-page">
+  <view wx:for="{{cars}}" wx:key="_id" class="car-row">
+    <view class="car-main" bind:tap="setCurrentCar" data-id="{{item._id}}">
+      <text class="car-icon">🚗</text>
+      <text class="car-name">{{item.name}}</text>
     </view>
+    <view class="car-actions">
+      <van-button
+        size="mini"
+        type="primary"
+        plain
+        icon="edit"
+        disabled="{{isMutating}}"
+        custom-style="min-width: 64rpx; width: 64rpx; padding: 0;"
+        bind:tap="renameCar"
+        data-id="{{item._id}}"
+        data-name="{{item.name}}"
+      ></van-button>
+      <van-button
+        size="mini"
+        type="danger"
+        icon="delete-o"
+        disabled="{{isMutating}}"
+        custom-style="min-width: 64rpx; width: 64rpx; padding: 0; margin-left: 12rpx;"
+        bind:tap="deleteCar"
+        data-id="{{item._id}}"
+      ></van-button>
+    </view>
+  </view>
+
+  <view class="add-btn-wrap">
+    <van-button type="info" disabled="{{isMutating}}" bind:tap="addCar">添加车辆</van-button>
+  </view>
+
+  <view wx:if="{{isMutating}}" class="page-mask" catchtouchmove="noop">
+    <view class="mask-center">
+      <text class="mask-main-text">{{mutatingText}}</text>
+      <text class="mask-loading-text">loading ...</text>
+    </view>
+  </view>
 </view>

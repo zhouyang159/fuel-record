@@ -1,1 +1,74 @@
 /* pages/cars.wxss */
+.cars-page {
+  padding: 16rpx;
+}
+
+.car-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1rpx solid #dcdcdc;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  margin-bottom: 16rpx;
+  background: #fff;
+}
+
+.car-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  margin-right: 12rpx;
+}
+
+.car-icon {
+  margin-right: 8rpx;
+}
+
+.car-name {
+  font-size: 30rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.car-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.add-btn-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 28rpx;
+}
+
+.page-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mask-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+}
+
+.mask-main-text {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.mask-loading-text {
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  opacity: 0.9;
+}
