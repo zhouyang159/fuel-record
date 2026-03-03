@@ -18,7 +18,8 @@ function getTimeString(): string {
   return `${formatNum(hour)}:${formatNum(minute)}`
 }
 
-const FUEL_LIST_TABLE = 'fuel_list_dev'
+const app = getApp()
+const FUEL_LIST_TABLE = app.globalData.FUEL_LIST_TABLE as string
 const CAR_LOAD_TIMEOUT = 10000
 const POLL_INTERVAL = 300
 
@@ -167,7 +168,13 @@ Page({
     newRecord.pay = String(Number(newRecord.pay).toFixed(2))
 
     const db = wx.cloud.database()
-    db.collection(FUEL_LIST_TABLE).add({ data: { ...newRecord, carId: getApp().globalData.currentCarId } })
+    const app = getApp()
+    const carName = (this.data.currentCar && this.data.currentCar.name) || ''
+    const userNick = (app.globalData.userInfo && (app.globalData.userInfo as any).nickName)
+      || (wx.getStorageSync('userInfo') && (wx.getStorageSync('userInfo') as any).nickName)
+      || ''
+
+    db.collection(FUEL_LIST_TABLE).add({ data: { ...newRecord, carId: app.globalData.currentCarId, carName, userNick } })
       .then(() => {
         this.setData({
           newRecord: {
@@ -180,6 +187,8 @@ Page({
             pay: '',
             isAddFull: false,
             isWarningLight: false,
+            carName,
+            userNick,
           }
         })
         wx.setStorageSync('price', String(newRecord.price))

@@ -9,8 +9,11 @@ interface IAppOption {
     openidReadyCallback: WechatMiniprogram.GetOpenUserInfoSuccessCallback | null,
     carReadyCallback: Function | null,
     CAR_LIST_TABLE: String,
+    FUEL_LIST_TABLE: String,
     currentCarId: String | null,
     cars: any[],
-  }
-  userInfoReadyCallback?: WechatMiniprogram.GetUserInfoSuccessCallback,
+  },
+
+  fetchCarListByOpenid: () => void,
+  userInfoReadyCallback?: () => void,
 }

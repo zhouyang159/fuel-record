@@ -1,5 +1,6 @@
 const app = getApp()
-const CAR_LIST_TABLE = app.globalData.CAR_LIST_TABLE
+const CAR_LIST_TABLE = app.globalData.CAR_LIST_TABLE as string
+const FUEL_LIST_TABLE = app.globalData.FUEL_LIST_TABLE as string
 
 Page({
   data: {
@@ -15,6 +16,9 @@ Page({
   fetchCarList() {
     return wx.cloud.database()
       .collection(CAR_LIST_TABLE)
+      .where({
+        _openid: app.globalData.openid,
+      })
       .get()
       .then(res => {
         const cars = res.data || []
@@ -35,8 +39,12 @@ Page({
       wx.showToast({ title: '最多添加5辆车', icon: 'error' })
       return
     }
+    const app = getApp()
+    const userNick = (app.globalData.userInfo && (app.globalData.userInfo as any).nickName)
+      || (wx.getStorageSync('userInfo') && (wx.getStorageSync('userInfo') as any).nickName)
+      || ''
 
-    let newCar = { name: `车辆${this.data.cars.length + 1}` }
+    let newCar = { name: `车辆${this.data.cars.length + 1}`, userNick }
     this.setData({ isMutating: true, mutatingText: '正在添加' })
 
     wx.cloud.database()
@@ -71,16 +79,20 @@ Page({
 
     this.setData({ isMutating: true, mutatingText: '正在删除' })
 
-    wx.cloud.database()
-      .collection(CAR_LIST_TABLE)
-      .doc(carId)
-      .remove()
+    const db = wx.cloud.database()
+    // remove fuel records first, then delete car only if that succeeds
+    db.collection(FUEL_LIST_TABLE).where({ carId }).remove()
+      .then(() => {
+        return db.collection(CAR_LIST_TABLE).doc(carId).remove()
+      })
       .then(() => {
         wx.showToast({ title: '删除成功', icon: 'success' })
         this.fetchCarList()
       })
-      .catch(() => {
-        wx.showToast({ title: '删除失败', icon: 'error' })
+      .catch((err) => {
+        // failure can come from either step
+        console.error('deleteCar error', err)
+        wx.showToast({ title: '删除失败，请稍后重试', icon: 'error' })
       })
       .finally(() => {
         this.setData({ isMutating: false, mutatingText: '' })
