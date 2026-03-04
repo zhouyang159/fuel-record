@@ -1,7 +1,7 @@
 {
   "pages": [
-    "pages/index/index",
-    "pages/modify/modify",
+    "pages/home/home",
+    "pages/addOrUpdate/addOrUpdate",
     "pages/cars/cars"
   ],
   "window": {

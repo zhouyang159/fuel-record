@@ -1,0 +1,11 @@
+<view class="add-page">
+  <view class="car-name">当前车辆：{{currentCar.name}}</view>
+  <view class="card">
+    <add record="{{record}}" bind:onRecordChange="onRecordChange" />
+    <view class="save-wrap">
+      <van-button type="info" bind:tap="saveRecord" loading="{{isSaving}}" loading-text="保存中...">
+        {{mode === 'update' ? '更新' : '保存'}}
+      </van-button>
+    </view>
+  </view>
+</view>

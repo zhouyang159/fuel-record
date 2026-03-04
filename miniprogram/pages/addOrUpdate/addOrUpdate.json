@@ -1,4 +1,5 @@
 {
+  "navigationBarTitleText": "新增记录",
   "usingComponents": {
     "add": "/components/add/add",
     "van-button": "@vant/weapp/button/index"

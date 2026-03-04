@@ -1,0 +1,90 @@
+/**index.wxss**/
+page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.scrollarea {
+  flex: 1;
+  overflow-y: hidden;
+}
+
+.delete_btn {
+  width: 80px;
+  height: 100%;
+  background: red;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-header {
+  padding: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.current-car-trigger {
+  font-size: 32rpx;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.header-add-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.car-popup {
+  width: 100%;
+  background: #fff;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.car-popup-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.car-popup-list {
+  max-height: 500rpx;
+  overflow-y: auto;
+}
+
+.car-popup-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.car-popup-item-active {
+  color: #1989fa;
+  font-weight: 600;
+}
+
+.car-popup-empty {
+  text-align: center;
+  color: #999;
+  padding: 24rpx 0;
+}
+
+.car-popup-actions {
+  margin-top: 20rpx;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.car-popup-actions-right {
+  margin-left: 16rpx;
+}

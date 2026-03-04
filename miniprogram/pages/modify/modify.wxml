@@ -1,7 +1,0 @@
-<view style="margin: 20rpx; border-radius: 10rpx; padding: 20rpx; border: 1rpx solid gray; height: 100%">
-	<add record="{{record}}" bind:onRecordChange="onRecordChange" />
-	<view style="margin-top: 10rpx; display: flex; justify-content: center;">
-		<van-button type="info" bindtap="updateRecord" style="">保存</van-button>
-	</view>
-</view>
-

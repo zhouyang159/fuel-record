@@ -1,22 +1,5 @@
 import { RecordType, ShowCardType } from '../../utils/types'
-import { validateRecordNumber } from '../../utils/util'
 import Dialog from '../../miniprogram_npm/@vant/weapp/dialog/dialog'
-
-function getDateString(): string {
-  const date = new Date()
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  return `${year}-${month}-${day}`
-}
-
-function getTimeString(): string {
-  const date = new Date()
-  const hour = date.getHours()
-  const minute = date.getMinutes()
-  const formatNum = (num: number) => num.toString().padStart(2, '0')
-  return `${formatNum(hour)}:${formatNum(minute)}`
-}
 
 const app = getApp()
 const FUEL_LIST_TABLE = app.globalData.FUEL_LIST_TABLE as string
@@ -27,17 +10,8 @@ const POLL_INTERVAL = 300
 Page({
   data: {
     currentCar: { name: '加载中...' } as any,
-    newRecord: {
-      id: '-1',
-      date: getDateString(),
-      time: getTimeString(),
-      mileage: '',
-      price: '',
-      quantity: '',
-      pay: '',
-      isAddFull: false,
-      isWarningLight: false,
-    } as RecordType,
+    carList: [] as any[],
+    showCarPopup: false,
     fuelList: [] as RecordType[],
     showCardArr: [] as ShowCardType[],
     nbFrontColor: '#000000',
@@ -59,18 +33,15 @@ Page({
       }
     }
 
-    let initPrice = wx.getStorageSync('price')
-    if (initPrice) {
-      this.setData({ 'newRecord.price': Number(initPrice) })
-    }
-
     this.initCarDataListener()
   },
   onReady() {
+    this.syncCarList()
     this.setCurrentCar()
     this.calCost()
   },
   onShow() {
+    this.syncCarList()
     this.setCurrentCar()
     this.fetchFuelListByOpenid()
       .then(list => {
@@ -99,6 +70,7 @@ Page({
 
     if (!app.globalData.carReadyCallback) {
       app.globalData.carReadyCallback = () => {
+        this.syncCarList()
         this.setCurrentCar()
         this.fetchFuelListByOpenid()
           .then(list => {
@@ -114,6 +86,9 @@ Page({
   setCurrentCar() {
     const app = getApp()
     if (!app.globalData.cars || app.globalData.cars.length === 0) {
+      this.setData({
+        currentCar: { name: '暂无车辆' },
+      })
       return
     }
 
@@ -125,16 +100,57 @@ Page({
     })
   },
 
+  syncCarList() {
+    const app = getApp()
+    this.setData({
+      carList: app.globalData.cars || [],
+    })
+  },
+
+  openCarPopup() {
+    this.syncCarList()
+    this.setData({ showCarPopup: true })
+  },
+
+  closeCarPopup() {
+    this.setData({ showCarPopup: false })
+  },
+
+  switchCurrentCar(e: any) {
+    const carId = e.currentTarget.dataset.id
+    const app = getApp()
+    if (!carId || carId === app.globalData.currentCarId) {
+      this.closeCarPopup()
+      return
+    }
+
+    app.globalData.currentCarId = carId
+    this.syncCarList()
+    this.setCurrentCar()
+    this.closeCarPopup()
+    this.closeAllSwipeCells()
+
+    this.fetchFuelListByOpenid()
+      .then(list => {
+        this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
+        this.calCost()
+      })
+  },
+
   toCarsPage() {
+    this.closeCarPopup()
     wx.navigateTo({
       url: '/pages/cars/cars',
     })
   },
 
-  onRecordChange(e: { detail: RecordType }) {
-    let newVal = e.detail
-    this.setData({ newRecord: newVal as RecordType })
+  toAddPage() {
+    this.closeCarPopup()
+    wx.navigateTo({
+      url: '/pages/addOrUpdate/addOrUpdate?mode=add',
+    })
   },
+
   async removeAllRecordsByUserId(userId: string) {
     const db = wx.cloud.database()
     return await db.collection(FUEL_LIST_TABLE).where({ userId }).remove()
@@ -149,60 +165,6 @@ Page({
     wx.hideLoading()
     res.data.sort((a, b) => b.mileage - a.mileage)
     return res.data
-  },
-  addRecord() {
-    if (validateRecordNumber(this.data.fuelList, this.data.newRecord) === false) return
-    if (this.data.fuelList.length > 0 && Number(this.data.newRecord.mileage) <= Number(this.data.fuelList[0].mileage)) {
-      wx.showToast({ title: '当前里程不能小于最后一次记录的里程数', icon: 'none', duration: 2000 })
-      return
-    }
-
-    let newRecord: RecordType = {
-      ...this.data.newRecord,
-      id: String(new Date().getTime()),
-      date: getDateString(),
-      time: getTimeString(),
-    }
-    newRecord.price = String(Number(newRecord.price).toFixed(2))
-    newRecord.quantity = String(Number(newRecord.quantity).toFixed(2))
-    newRecord.pay = String(Number(newRecord.pay).toFixed(2))
-
-    const db = wx.cloud.database()
-    const app = getApp()
-    const carName = (this.data.currentCar && this.data.currentCar.name) || ''
-    const userNick = (app.globalData.userInfo && (app.globalData.userInfo as any).nickName)
-      || (wx.getStorageSync('userInfo') && (wx.getStorageSync('userInfo') as any).nickName)
-      || ''
-
-    db.collection(FUEL_LIST_TABLE).add({ data: { ...newRecord, carId: app.globalData.currentCarId, carName, userNick } })
-      .then(() => {
-        this.setData({
-          newRecord: {
-            id: String(new Date().getTime()),
-            date: getDateString(),
-            time: getTimeString(),
-            mileage: newRecord.mileage,
-            price: newRecord.price,
-            quantity: '',
-            pay: '',
-            isAddFull: false,
-            isWarningLight: false,
-            carName,
-            userNick,
-          }
-        })
-        wx.setStorageSync('price', String(newRecord.price))
-        wx.showToast({ title: '保存成功', icon: 'none', duration: 2000 })
-          .then(() => {
-            setTimeout(() => {
-              this.fetchFuelListByOpenid()
-                .then(list => {
-                  this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
-                  this.calCost()
-                })
-            }, 500)
-          })
-      })
   },
   onSwipeCellOpen(event) {
     const id = event.currentTarget.dataset.id
@@ -323,26 +285,7 @@ Page({
       const index = e.currentTarget.dataset.index
       const record = this.data.showCardArr[index]
       wx.navigateTo({
-        url: '/pages/modify/modify',
-        events: {
-          updateRecord: (newRecord: RecordType) => {
-            wx.showLoading({ title: '保存中...' })
-            let _id = newRecord._id
-            delete newRecord._id
-            delete newRecord._openid
-            wx.cloud.database().collection(FUEL_LIST_TABLE).where({ _id }).update({ data: newRecord })
-              .then(() => {
-                wx.showToast({ title: '修改成功', icon: 'none', duration: 2000 })
-                this.fetchFuelListByOpenid()
-                  .then(list => {
-                    this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
-                    this.calCost()
-                  })
-              })
-              .catch(() => wx.showToast({ title: '修改失败', icon: 'none', duration: 2000 }))
-              .finally(() => wx.hideLoading())
-          }
-        },
+        url: '/pages/addOrUpdate/addOrUpdate?mode=update',
         success: (res) => {
           res.eventChannel.emit('acceptDataFromOpenerPage', { fuelList: this.data.fuelList, record })
         }
@@ -360,4 +303,5 @@ Page({
       }
     }
   },
+  noop() { },
 })

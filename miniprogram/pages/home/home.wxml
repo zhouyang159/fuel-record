@@ -1,0 +1,79 @@
+<view>
+  <view class="home-header">
+    <view bind:tap="openCarPopup" class="current-car-trigger">
+      <text>{{currentCar.name}}</text>
+      <van-icon name="arrow-down" size="32rpx" color="#666" style="margin-left: 8rpx;" />
+    </view>
+    <view bind:tap="toAddPage" class="header-add-btn">
+      <van-icon name="add-o" size="40rpx" color="#1989fa" />
+    </view>
+  </view>
+  <scroll-view class="scrollarea" scroll-y>
+    <view style="padding: 20rpx;" bind:tap="closeAllSwipeCells">
+      <view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx;">
+        <icon type="info" />
+        <view>需要两次加满才能计算出油耗</view>
+      </view>
+      <!-- 显示模块 -->
+      <view style="margin-top: 20rpx;">
+        <view>
+          <view wx:key="index" wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;">
+            <van-swipe-cell id="swipe-{{index}}" data-id="{{item.id}}" right-width="{{ 80 }}" async-close bind:open="onSwipeCellOpen" bind:close="onSwipeCellClose">
+              <van-cell-group>
+                <view data-index="{{index}}" data-id="{{item.id}}" bind:tap="toModifyPage">
+                  <view style="display: flex; justify-content: space-between;">
+                    <view>{{item.date}} {{item.time}}</view>
+                    <view>{{item.fuelConsumption}}升/百公里</view>
+                    <view>{{item.mileage}}公里</view>
+                  </view>
+                  <view style="background-color: rgb(242, 242, 242);">
+                    <view style="display: flex; justify-content: space-between;">
+                      <view>{{item.pay}}元</view>
+                      <view>{{item.price}}元/升</view>
+                      <view>+{{item.quantity}}升</view>
+                    </view>
+                    <view style="display: flex;">
+                      <view wx:if="{{item.isAddFull}}" style="color: red;">加满</view>
+                      <view wx:if="{{item.isWarningLight}}" style="color: red; margin-left: 10rpx;">
+                        灯亮
+                      </view>
+                    </view>
+                  </view>
+                  <view style="margin-top: 10rpx; border-radius: 10rpx; padding: 10rpx; display: flex; justify-content: space-between; background-color: rgb(230, 245, 240);">
+                    <view>{{item.cost}}元/公里</view>
+                    <view>{{item.costLiter}}升</view>
+                    <view>+{{item.diffMile}}公里</view>
+                  </view>
+                </view>
+              </van-cell-group>
+              <view slot="right" style="height: 100%">
+                <view class="delete_btn">删除</view>
+              </view>
+            </van-swipe-cell>
+          </view>
+        </view>
+      </view>
+      <van-dialog id="van-dialog" />
+    </view>
+  </scroll-view>
+  <van-popup show="{{showCarPopup}}" position="bottom" round close-on-click-overlay bind:close="closeCarPopup">
+    <view class="car-popup" catchtap="noop">
+      <view class="car-popup-title">切换车辆</view>
+      <view class="car-popup-list">
+        <view wx:for="{{carList}}" wx:key="_id" class="car-popup-item {{item._id === currentCar._id ? 'car-popup-item-active' : ''}}" data-id="{{item._id}}" bind:tap="switchCurrentCar">
+          <text>{{item.name}}</text>
+          <text wx:if="{{item._id === currentCar._id}}">当前</text>
+        </view>
+        <view wx:if="{{!carList.length}}" class="car-popup-empty">暂无车辆</view>
+      </view>
+      <view class="car-popup-actions">
+        <view>
+          <van-button plain size="small" bind:tap="closeCarPopup">取消</van-button>
+        </view>
+        <view class="car-popup-actions-right">
+          <van-button type="primary" size="small" bind:tap="toCarsPage">管理车辆</van-button>
+        </view>
+      </view>
+    </view>
+  </van-popup>
+</view>

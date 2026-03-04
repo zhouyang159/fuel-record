@@ -29,7 +29,7 @@
   </view>
 
   <view class="add-btn-wrap">
-    <van-button type="info" disabled="{{isMutating}}" bind:tap="addCar">添加车辆</van-button>
+    <van-button type="info" disabled="{{isMutating}}" bind:tap="addCar">新增车辆</van-button>
   </view>
 
   <view wx:if="{{isMutating}}" class="page-mask" catchtouchmove="noop">
