@@ -12,6 +12,8 @@ export interface RecordType {
   discountAmount: string, // 机显单价 - 实际单价 = 优惠金额
   isAddFull: boolean,
   isWarningLight: boolean,
+
+  carId?: string,
   carName?: string,
   userNick?: string,
 

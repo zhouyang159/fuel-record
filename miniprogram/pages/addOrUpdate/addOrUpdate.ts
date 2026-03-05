@@ -40,7 +40,6 @@ const FUEL_LIST_TABLE = app.globalData.FUEL_LIST_TABLE as string
 Page({
   data: {
     mode: 'add',
-    pageTitle: '新增记录',
     currentCar: { name: '加载中...' } as any,
     isSaving: false,
     fuelList: [] as RecordType[],
