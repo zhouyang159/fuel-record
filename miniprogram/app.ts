@@ -1,16 +1,38 @@
+
+const env_table_pre_name = 'pro'
+
+
 App<IAppOption>({
   globalData: {
     userInfo: undefined as WechatMiniprogram.UserInfo | undefined,
     env: 'cloud1-8g65ecjm393c67f1' as string,
     openid: '' as string,
     openidReadyCallback: null,
-    carReadyCallback: null, // Add this callback
-    CAR_LIST_TABLE: 'car_list_dev',
-    FUEL_LIST_TABLE: 'fuel_list_dev',
+    carReadyCallback: null,
+    CAR_LIST_TABLE: env_table_pre_name + '_car_list',
+    FUEL_LIST_TABLE: env_table_pre_name + '_fuel_list',
     currentCarId: null,
     cars: [] as any[],
   },
   onLaunch() {
+    const updateManager = wx.getUpdateManager()
+
+    updateManager.onCheckForUpdate(function (res) {
+      console.log('hasUpdate', res.hasUpdate)
+    })
+
+    updateManager.onUpdateReady(function () {
+      wx.showModal({
+        title: '更新提示',
+        content: '新版本已经准备好，是否重启应用？',
+        success(res) {
+          if (res.confirm) {
+            updateManager.applyUpdate()
+          }
+        }
+      })
+    })
+
     if (!wx.cloud) {
       console.error("请使用 2.2.3 或以上的基础库以使用云能力");
     } else {
