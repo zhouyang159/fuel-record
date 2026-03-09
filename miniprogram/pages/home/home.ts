@@ -1,4 +1,4 @@
-import { RecordType, ShowCardType } from '../../utils/types'
+﻿import { RecordType, ShowCardType } from '../../utils/types'
 import Dialog from '../../miniprogram_npm/@vant/weapp/dialog/dialog'
 
 const app = getApp()
@@ -14,10 +14,19 @@ Page({
     showCarPopup: false,
     fuelList: [] as RecordType[],
     showCardArr: [] as ShowCardType[],
+    displayCardArr: [] as ShowCardType[],
     nbFrontColor: '#000000',
     nbBackgroundColor: '#ffffff',
     swipeCellId: -1 as number,
     isRefreshing: false,
+    summaryBoard: {
+      totalCost: 0,
+      avgFuelConsumption: 0,
+      totalMileage: 0,
+      year: new Date().getFullYear()
+    } as any,
+    showYearPicker: false,
+    yearRange: [] as number[],
   },
   onLoad() {
     const app = getApp()
@@ -35,6 +44,7 @@ Page({
     }
 
     this.initCarDataListener()
+    this.generateYearRange()
   },
   onReady() {
     this.syncCarList()
@@ -216,7 +226,7 @@ Page({
     this.setData({ swipeCellId: -1 })
   },
   closeAllSwipeCells() {
-    const len = this.data.showCardArr.length
+    const len = this.data.displayCardArr.length
     for (let i = 0; i < len; i++) {
       const instance = this.selectComponent(`#swipe-${i}`)
       if (instance) instance.close()
@@ -299,11 +309,63 @@ Page({
     }
 
     this.setData({ showCardArr })
+    this.setData({ displayCardArr: showCardArr })
+    this.calculateSummary()
+  },
+  calculateSummary() {
+    const { fuelList, showCardArr, summaryBoard } = this.data
+    const selectedYear = summaryBoard.year
+    
+    // Filter records by selected year (skip if '全部')
+    let filteredList = fuelList
+    let filteredShowCardArr = showCardArr
+    if (selectedYear !== '全部') {
+      filteredList = fuelList.filter(item => {
+        const date = item.date || ''
+        const year = parseInt(date.split('-')[0]) || 0
+        return year === selectedYear
+      })
+      filteredShowCardArr = showCardArr.filter(item => {
+        const date = item.date || ''
+        const year = parseInt(date.split('-')[0]) || 0
+        return year === selectedYear
+      })
+    }
+    
+    // Calculate total cost
+    const totalCost = filteredList.reduce((sum, item) => {
+      const pay = Number(item.pay) || 0
+      return sum + pay
+    }, 0)
+    
+    // Calculate average fuel consumption from showCardArr
+    const validConsumptions = filteredShowCardArr.filter(item => item.fuelConsumption && item.fuelConsumption > 0)
+    const avgFuelConsumption = validConsumptions.length > 0 
+      ? (validConsumptions.reduce((sum, item) => sum + item.fuelConsumption, 0) / validConsumptions.length)
+      : 0
+    
+    // Calculate total mileage (difference between first and last record)
+    let totalMileage = 0
+    if (filteredList.length >= 2) {
+      const maxMileage = Math.max(...filteredList.map(item => Number(item.mileage) || 0))
+      const minMileage = Math.min(...filteredList.map(item => Number(item.mileage) || 0))
+      totalMileage = maxMileage - minMileage
+    }
+    
+    this.setData({
+      summaryBoard: {
+        totalCost: Number(totalCost.toFixed(2)),
+        avgFuelConsumption: Number(avgFuelConsumption.toFixed(2)),
+        totalMileage: totalMileage,
+        year: selectedYear
+      }
+    })
   },
   toModifyPage(e: any) {
     const navigate = () => {
-      const index = e.currentTarget.dataset.index
-      const record = this.data.showCardArr[index]
+      const id = e.currentTarget.dataset.id
+      const record = this.data.fuelList.find(item => item.id === id)
+      if (!record) return
       wx.navigateTo({
         url: '/pages/addOrUpdate/addOrUpdate?mode=update',
         success: (res) => {
@@ -322,6 +384,48 @@ Page({
         setTimeout(navigate, 10)
       }
     }
+  },
+  generateYearRange() {
+    const currentYear = new Date().getFullYear()
+    const yearRange: Array<number|string> = []
+    yearRange.push('全部')
+    for (let i = currentYear; i >= currentYear - 10; i--) {
+      yearRange.push(i)
+    }
+    this.setData({ yearRange })
+  },
+  onYearSelectorTap() {
+    this.setData({ showYearPicker: true })
+  },
+  onYearPickerChange(e: any) {
+    const { value } = e.detail
+    const selectedYear = this.data.yearRange[value[0]]
+    
+    // Filter fuelList and showCardArr by selected year, if not '全部'
+    let filteredFuelList = this.data.fuelList
+    let filteredShowCardArr = this.data.showCardArr
+    if (selectedYear !== '全部') {
+      filteredFuelList = this.data.fuelList.filter(item => {
+        const date = item.date || ''
+        const year = parseInt(date.split('-')[0]) || 0
+        return year === selectedYear
+      })
+      filteredShowCardArr = this.data.showCardArr.filter(item => {
+        const date = item.date || ''
+        const year = parseInt(date.split('-')[0]) || 0
+        return year === selectedYear
+      })
+    }
+    
+    this.setData({
+      showYearPicker: false,
+      'summaryBoard.year': selectedYear,
+      displayCardArr: filteredShowCardArr
+    } as any)
+    this.calculateSummary()
+  },
+  onYearPickerCancel() {
+    this.setData({ showYearPicker: false })
   },
   noop() { },
 })

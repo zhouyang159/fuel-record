@@ -1,4 +1,4 @@
-<view>
+﻿<view>
   <view class="home-header">
     <view bind:tap="openCarPopup" class="current-car-trigger">
       <text>{{currentCar.name}}</text>
@@ -10,46 +10,88 @@
   </view>
   <scroll-view class="scrollarea" scroll-y>
     <view style="padding: 20rpx;" bind:tap="closeAllSwipeCells">
-      <view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx;">
-        <icon type="info" />
+      <!-- 统计面板 -->
+      <view class="summary-board">
+        <view class="summary-year-row" bind:tap="onYearSelectorTap">
+          <text class="summary-year">{{summaryBoard.year}}</text>
+          <van-icon name="arrow-down" size="20rpx" color="#999" />
+        </view>
+        <view class="summary-stats-row">
+          <view class="summary-stat">
+            <text class="summary-stat-value">{{summaryBoard.totalCost}}元</text>
+          </view>
+          <view class="summary-stat">
+            <text class="summary-stat-value">{{summaryBoard.avgFuelConsumption}}升/百公里</text>
+          </view>
+          <view class="summary-stat">
+            <text class="summary-stat-value">{{summaryBoard.totalMileage}}公里</text>
+          </view>
+        </view>
+      </view>
+      <!-- 年份选择器 -->
+      <van-popup show="{{showYearPicker}}" position="bottom" round close-on-click-overlay bind:close="onYearPickerCancel">
+        <view style="padding: 20rpx;">
+          <view style="text-align: center; font-size: 28rpx; margin-bottom: 20rpx; font-weight: 600;">
+            选择年份
+          </view>
+          <picker-view class="year-picker-view" value="{{[yearRange.indexOf(summaryBoard.year)]}}" bind:change="onYearPickerChange">
+            <picker-view-column>
+              <view wx:for="{{yearRange}}" wx:key="*this" class="year-picker-item">{{item}}</view>
+            </picker-view-column>
+          </picker-view>
+          <view style="display: flex; margin-top: 20rpx; gap: 10rpx;">
+            <van-button plain size="small" style="flex: 1;" bind:tap="onYearPickerCancel">
+              取消
+            </van-button>
+            <van-button type="primary" size="small" style="flex: 1;" bind:tap="onYearPickerCancel">
+              确定
+            </van-button>
+          </view>
+        </view>
+      </van-popup>
+      <view style="display: flex; background: beige; padding: 5rpx;border-radius: 10rpx; margin-top: 20rpx; padding: 10rpx; align-items: center;">
         <view>需要两次加满才能计算出油耗</view>
+        <icon type="info" />
       </view>
       <!-- 显示模块 -->
       <view style="margin-top: 20rpx;">
         <view>
-          <view wx:key="index" wx:for="{{showCardArr}}" style="border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx; margin-bottom: 10rpx;">
-            <van-swipe-cell id="swipe-{{index}}" data-id="{{item.id}}" right-width="{{ 80 }}" async-close bind:open="onSwipeCellOpen" bind:close="onSwipeCellClose">
-              <van-cell-group>
-                <view data-index="{{index}}" data-id="{{item.id}}" bind:tap="toModifyPage">
-                  <view style="display: flex; justify-content: space-between;">
-                    <view>{{item.date}} {{item.time}}</view>
-                    <view>{{item.fuelConsumption}}升/百公里</view>
-                    <view>{{item.mileage}}公里</view>
-                  </view>
-                  <view style="background-color: rgb(242, 242, 242);">
+          <view wx:key="index" wx:for="{{displayCardArr}}" style="display:flex; align-items:flex-start; margin-bottom: 10rpx;">
+            <text class="record-index">{{displayCardArr.length - index}}</text>
+            <view style="flex:1; border: 1rpx solid gray; border-radius: 10rpx; padding: 10rpx;">
+              <van-swipe-cell id="swipe-{{index}}" data-id="{{item.id}}" right-width="{{ 80 }}" async-close bind:open="onSwipeCellOpen" bind:close="onSwipeCellClose">
+                <van-cell-group>
+                  <view data-index="{{index}}" data-id="{{item.id}}" bind:tap="toModifyPage">
                     <view style="display: flex; justify-content: space-between;">
-                      <view>{{item.pay}}元</view>
-                      <view>{{item.price}}元/升</view>
-                      <view>+{{item.quantity}}升</view>
+                      <view>{{item.date}} {{item.time}}</view>
+                      <view>{{item.fuelConsumption}}升/百公里</view>
+                      <view>{{item.mileage}}公里</view>
                     </view>
-                    <view style="display: flex;">
-                      <view wx:if="{{item.isAddFull}}" style="color: red;">加满</view>
-                      <view wx:if="{{item.isWarningLight}}" style="color: red; margin-left: 10rpx;">
-                        灯亮
+                    <view style="background-color: rgb(242, 242, 242);">
+                      <view style="display: flex; justify-content: space-between;">
+                        <view>{{item.pay}}元</view>
+                        <view>{{item.price}}元/升</view>
+                        <view>+{{item.quantity}}升</view>
+                      </view>
+                      <view style="display: flex;">
+                        <view wx:if="{{item.isAddFull}}" style="color: red;">加满</view>
+                        <view wx:if="{{item.isWarningLight}}" style="color: red; margin-left: 10rpx;">
+                          灯亮
+                        </view>
                       </view>
                     </view>
+                    <view style="margin-top: 10rpx; border-radius: 10rpx; padding: 10rpx; display: flex; justify-content: space-between; background-color: rgb(230, 245, 240);">
+                      <view>{{item.cost}}元/公里</view>
+                      <view>{{item.costLiter}}升</view>
+                      <view>+{{item.diffMile}}公里</view>
+                    </view>
                   </view>
-                  <view style="margin-top: 10rpx; border-radius: 10rpx; padding: 10rpx; display: flex; justify-content: space-between; background-color: rgb(230, 245, 240);">
-                    <view>{{item.cost}}元/公里</view>
-                    <view>{{item.costLiter}}升</view>
-                    <view>+{{item.diffMile}}公里</view>
-                  </view>
+                </van-cell-group>
+                <view slot="right" style="height: 100%">
+                  <view class="delete_btn">删除</view>
                 </view>
-              </van-cell-group>
-              <view slot="right" style="height: 100%">
-                <view class="delete_btn">删除</view>
-              </view>
-            </van-swipe-cell>
+              </van-swipe-cell>
+            </view>
           </view>
         </view>
       </view>

@@ -1,5 +1,5 @@
 
-const env_table_pre_name = 'pro'
+const env_table_pre_name = 'dev'
 
 
 App<IAppOption>({

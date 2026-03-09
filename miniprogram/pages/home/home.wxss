@@ -88,3 +88,71 @@ page {
 .car-popup-actions-right {
   margin-left: 16rpx;
 }
+
+/* 统计面板样式 */
+.summary-board {
+  background: linear-gradient(135deg, #f8f8f8 0%, #efefef 100%);
+  border-radius: 12rpx;
+  padding: 24rpx 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.summary-year-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 20rpx;
+}
+
+.summary-year {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.summary-stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.summary-stat-value {
+  font-size: 26rpx;
+  color: #666;
+  display: block;
+  line-height: 1.4;
+}
+
+/* 年份选择器样式 */
+.year-picker-view {
+  height: 300rpx;
+  width: 100%;
+}
+
+.year-picker-item {
+  text-align: center;
+  line-height: 60rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+/* 卡片序号 */
+.record-index {
+  top: 10rpx;
+  left: 10rpx;
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  background-color: #1989fa;
+  color: #fff;
+  border-radius: 20rpx;
+  text-align: center;
+  font-size: 24rpx;
+  z-index: 10;
+  margin-right: 10rpx;
+}
