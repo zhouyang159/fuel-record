@@ -1,4 +1,7 @@
 {
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#ffffff",
+  "backgroundTextStyle": "dark",
   "usingComponents": {
     "van-button": "@vant/weapp/button/index",
     "van-swipe-cell": "@vant/weapp/swipe-cell/index",

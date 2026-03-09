@@ -143,6 +143,8 @@ Page({
   async saveRecord() {
     if (this.data.isSaving) return
 
+    this.setData({ isSaving: true })
+
     if (this.data.mode === 'update') {
       this.updateRecord()
       return
@@ -155,18 +157,21 @@ Page({
     const app = getApp()
     if (!app.globalData.currentCarId) {
       wx.showToast({ title: '请先选择车辆', icon: 'none' })
+      this.setData({ isSaving: false })
       return
     }
 
     const fuelList = await this.fetchFuelListByOpenid()
-    if (validateRecordNumber(fuelList, this.data.record) === false) return
-
-    if (fuelList.length > 0 && Number(this.data.record.mileage) <= Number(fuelList[0].mileage)) {
-      wx.showToast({ title: '当前里程不能小于最后一次记录的里程数', icon: 'none', duration: 2000 })
+    if (validateRecordNumber(fuelList, this.data.record) === false) {
+      this.setData({ isSaving: false })
       return
     }
 
-    this.setData({ isSaving: true })
+    if (fuelList.length > 0 && Number(this.data.record.mileage) <= Number(fuelList[0].mileage)) {
+      wx.showToast({ title: '当前里程不能小于最后一次记录的里程数', icon: 'none', duration: 2000 })
+      this.setData({ isSaving: false })
+      return
+    }
 
     const newRecord: RecordType = {
       ...this.data.record,
@@ -203,20 +208,21 @@ Page({
 
   updateRecord() {
     if (validateRecordNumber(this.data.fuelList, this.data.record) === false) {
+      this.setData({ isSaving: false })
       return
     }
 
     if (!this.validateUpdateMileage()) {
+      this.setData({ isSaving: false })
       return
     }
 
     const recordAny = this.data.record as any
     if (!recordAny._id) {
       wx.showToast({ title: '记录ID缺失', icon: 'none' })
+      this.setData({ isSaving: false })
       return
     }
-
-    this.setData({ isSaving: true })
     wx.showLoading({ title: '保存中...' })
 
     const _id = recordAny._id

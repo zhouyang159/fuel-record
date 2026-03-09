@@ -17,6 +17,7 @@ Page({
     nbFrontColor: '#000000',
     nbBackgroundColor: '#ffffff',
     swipeCellId: -1 as number,
+    isRefreshing: false,
   },
   onLoad() {
     const app = getApp()
@@ -47,6 +48,25 @@ Page({
       .then(list => {
         this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
         this.calCost()
+      })
+  },
+
+  onPullDownRefresh() {
+    this.setData({ isRefreshing: true })
+    this.fetchFuelListByOpenid()
+      .then(list => {
+        this.setData({ 
+          fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
+          isRefreshing: false 
+        })
+        this.calCost()
+        wx.stopPullDownRefresh()
+        wx.showToast({ title: '刷新成功', icon: 'success', duration: 1500 })
+      })
+      .catch(() => {
+        this.setData({ isRefreshing: false })
+        wx.stopPullDownRefresh()
+        wx.showToast({ title: '刷新失败', icon: 'error', duration: 1500 })
       })
   },
 

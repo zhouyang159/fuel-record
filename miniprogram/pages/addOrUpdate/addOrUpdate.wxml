@@ -4,7 +4,7 @@
     <add record="{{record}}" bind:onRecordChange="onRecordChange" />
     <view class="save-wrap">
       <van-button type="info" bind:tap="saveRecord" loading="{{isSaving}}" loading-text="保存中...">
-        {{mode === 'update' ? '更新' : '保存'}}
+        保存
       </van-button>
     </view>
   </view>
