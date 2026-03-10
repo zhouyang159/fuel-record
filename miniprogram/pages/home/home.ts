@@ -154,6 +154,11 @@ Page({
       return
     }
 
+    this.setData({
+      'summaryBoard.year': '全部',
+    })
+
+
     app.globalData.currentCarId = carId
     this.syncCarList()
     this.setCurrentCar()
@@ -402,14 +407,8 @@ Page({
     const selectedYear = this.data.yearRange[value[0]]
     
     // Filter fuelList and showCardArr by selected year, if not '全部'
-    let filteredFuelList = this.data.fuelList
     let filteredShowCardArr = this.data.showCardArr
     if (selectedYear !== '全部') {
-      filteredFuelList = this.data.fuelList.filter(item => {
-        const date = item.date || ''
-        const year = parseInt(date.split('-')[0]) || 0
-        return year === selectedYear
-      })
       filteredShowCardArr = this.data.showCardArr.filter(item => {
         const date = item.date || ''
         const year = parseInt(date.split('-')[0]) || 0
