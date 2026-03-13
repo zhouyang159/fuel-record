@@ -1,39 +1,36 @@
+
 <view>
-  <view class="date-time-row">
+  <view style="margin-bottom: 10rpx; display: flex">
     <picker mode="date" value="{{record.date}}" bindchange="onDateChange">
-      加油时间：{{record.date}}
+        加油时间：{{record.date}} 
     </picker>
-    <picker class="time-picker" mode="time" value="{{record.time}}" bindchange="onTimeChange">
-      {{record.time}}
+    <picker style="margin-left: 10rpx" mode="time" value="{{record.time}}" bindchange="onTimeChange">
+        {{record.time}}
     </picker>
   </view>
-
-  <view class="mileage-row">
-    当前里程：<input class="input mileage-input" value="{{record.mileage}}" type="number" bindinput="onMileageChange" />
+  
+  <view style="margin-top:20rpx; display: flex;">
+    当前里程：<input style="flex: 1" class="input" value="{{record.mileage}}" type="number" bindinput="onMileageChange" />
   </view>
 
-  <view class="formula-row">
-    <view class="field-group">机显单价：<input class="input" value="{{record.price}}" type="digit" bindinput="onPriceChange" /></view>
-    <view class="operator-badge" aria-label="multiply">
-      <van-icon name="cross" size="22rpx" color="#1989fa" />
-    </view>
-    <view class="field-group">加油量：<input class="input" value="{{record.quantity}}" type="digit" bindinput="onQuantityChange" /></view>
-    <view class="operator-badge" aria-label="result">
-      <van-icon name="arrow" size="22rpx" color="#1989fa" />
-    </view>
-    <view class="field-group">机显金额：<input class="input" value="{{record.pay}}" type="digit" bindinput="onPayChange" /></view>
+  <view style="margin-top: 20rpx; display: flex; align-items: center;">
+    <view>机显单价：<input class="input" value="{{record.price}}" type="digit" bindinput="onPriceChange" /></view>
+    <view style="margin: 0 20rpx;">x</view>
+    <view>加油量：<input class="input" value="{{record.quantity}}" type="digit" bindinput="onQuantityChange" /></view>
+    <view style="margin: 0 20rpx;">=</view>
+    <view>机显金额：<input class="input" value="{{record.pay}}" type="digit" bindinput="onPayChange" /></view>
   </view>
 
-  <view class="formula-row second-row">
-    <view class="field-group">实际单价：<input class="input disabled" disabled="{{true}}" value="{{record.realPrice}}" type="digit" bindinput="onRealPriceChange" /></view>
-    <view class="operator-space"></view>
-    <view class="field-group">优惠金额：<input class="input" value="{{record.discountAmount}}" type="digit" bindinput="onDiscountAmountChange" /></view>
-    <view class="operator-space"></view>
-    <view class="field-group">实付金额：<input class="input" value="{{record.realPay}}" type="digit" bindinput="onRealPayChange" /></view>
+    <view style="margin-top: 20rpx; display: flex; align-items: center;">
+    <view>实际单价：<input class="input disabled" disabled="{{true}}" value="{{record.realPrice}}" type="digit" bindinput="onRealPriceChange" /></view>
+    <view style="margin: 0 20rpx;"></view>
+    <view>优惠金额：<input class="input" value="{{record.discountAmount}}" type="digit" bindinput="onDiscountAmountChange"/></view>
+    <view style="margin: 0 20rpx;"></view>
+    <view>实付金额：<input class="input" value="{{record.realPay}}" type="digit" bindinput="onRealPayChange" /></view>
   </view>
 
   <view>
-    <view class="toggle-row toggle-row-first">
+    <view style="display: flex;margin-top: 30rpx;">
       <view>是否加满？</view>
       <view>
         <button bindtap="setAddFull" data-value="true" type="{{ record.isAddFull ? 'primary' : 'default'}}" size="mini">加满</button>
@@ -41,7 +38,7 @@
       </view>
     </view>
 
-    <view class="toggle-row">
+    <view style="display: flex; margin-top: 20rpx;">
       <view>油量警告灯亮了吗？</view>
       <view>
         <button bindtap="setWarningLight" data-value="true" type="{{ record.isWarningLight ? 'primary' : 'default'}}" size="mini">油灯亮</button>
