@@ -20,7 +20,7 @@ page {
 }
 
 .home-header {
-  padding: 20rpx;
+  padding: 16rpx 20rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -93,15 +93,15 @@ page {
 .summary-board {
   background: linear-gradient(135deg, #f8f8f8 0%, #efefef 100%);
   border-radius: 12rpx;
-  padding: 24rpx 20rpx;
-  margin-bottom: 20rpx;
+  padding: 18rpx 16rpx;
+  margin-bottom: 12rpx;
 }
 
 .summary-year-row {
   display: flex;
   align-items: center;
   gap: 8rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx;
 }
 
 .summary-year {
@@ -128,12 +128,52 @@ page {
   line-height: 1.4;
 }
 
+
+.content-wrap {
+  padding: 14rpx;
+}
+
+.tips-banner {
+  display: flex;
+  align-items: center;
+  background: beige;
+  border-radius: 10rpx;
+  margin-top: 12rpx;
+  padding: 8rpx 10rpx;
+}
+
+.records-wrap {
+  margin-top: 12rpx;
+}
+
+.record-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8rpx;
+}
+
+.record-card {
+  flex: 1;
+  border: 1rpx solid gray;
+  border-radius: 10rpx;
+  padding: 8rpx;
+}
+
+.record-footer {
+  margin-top: 8rpx;
+  border-radius: 10rpx;
+  padding: 8rpx;
+  display: flex;
+  justify-content: space-between;
+  background-color: rgb(230, 245, 240);
+}
+
 /* 年份选择器样式 */
 .year-selector-container {
   margin-top: 20rpx;
   background: #fff;
   border-radius: 12rpx;
-  padding: 20rpx;
+  padding: 16rpx 20rpx;
 }
 
 .year-selector-title {
@@ -141,7 +181,7 @@ page {
   font-size: 28rpx;
   font-weight: 600;
   color: #333;
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx;
 }
 
 .year-labels-grid {
