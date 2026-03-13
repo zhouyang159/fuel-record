@@ -1,6 +1,94 @@
+.add-form {
+  font-size: 34rpx;
+}
+
+.date-time-row {
+  margin-bottom: 12rpx;
+  display: flex;
+  align-items: center;
+}
+
+.time-picker {
+  margin-left: 12rpx;
+}
+
+.mileage-row {
+  margin-top: 16rpx;
+  display: flex;
+  align-items: center;
+}
+
+.row-label {
+  white-space: nowrap;
+}
+
+.mileage-input {
+  flex: 1;
+}
+
+.calc-row {
+  margin-top: 18rpx;
+  display: flex;
+  align-items: center;
+}
+
+.second-row {
+  margin-top: 14rpx;
+}
+
+.calc-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 6rpx;
+  color: #333;
+  white-space: nowrap;
+}
+
+.operator-badge {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 18rpx;
+  background: #e8f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20rpx 8rpx 0;
+  flex-shrink: 0;
+}
+
+.plain-row .calc-field + .calc-field {
+  margin-left: 12rpx;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+}
+
+.toggle-row-first {
+  margin-top: 26rpx;
+}
+
+.toggle-label {
+  white-space: nowrap;
+  margin-right: 12rpx;
+}
+
+.toggle-actions button {
+  margin-left: 8rpx;
+}
+
 .input {
-    border: 1px solid red;
-    padding-left: 5rpx;
+  border: 1px solid red;
+  padding-left: 8rpx;
+  height: 52rpx;
+  box-sizing: border-box;
 }
 
 .input.disabled {
@@ -8,6 +96,7 @@
   color: #888;
   border-color: #e0e0e0;
 }
+
 .input.disabled::placeholder {
   color: #aaa;
 }
