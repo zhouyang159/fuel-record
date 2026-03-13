@@ -1,6 +1,64 @@
+.date-time-row {
+  margin-bottom: 10rpx;
+  display: flex;
+}
+
+.time-picker {
+  margin-left: 10rpx;
+}
+
+.mileage-row {
+  margin-top: 20rpx;
+  display: flex;
+}
+
+.mileage-input {
+  flex: 1;
+}
+
+.formula-row {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+}
+
+.second-row {
+  margin-top: 16rpx;
+}
+
+.field-group {
+  display: flex;
+  align-items: center;
+}
+
+.operator-badge {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: #e8f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 12rpx;
+}
+
+.operator-space {
+  width: 40rpx;
+  margin: 0 12rpx;
+}
+
+.toggle-row {
+  display: flex;
+  margin-top: 20rpx;
+}
+
+.toggle-row-first {
+  margin-top: 30rpx;
+}
+
 .input {
-    border: 1px solid red;
-    padding-left: 5rpx;
+  border: 1px solid red;
+  padding-left: 5rpx;
 }
 
 .input.disabled {
@@ -8,6 +66,7 @@
   color: #888;
   border-color: #e0e0e0;
 }
+
 .input.disabled::placeholder {
   color: #aaa;
 }
