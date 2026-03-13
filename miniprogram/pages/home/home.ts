@@ -23,10 +23,10 @@ Page({
       totalCost: 0,
       avgFuelConsumption: 0,
       totalMileage: 0,
-      year: new Date().getFullYear()
+      year: '全部'
     } as any,
     showYearPicker: false,
-    yearRange: [] as number[],
+    yearRange: [] as (number | string)[],
   },
   onLoad() {
     const app = getApp()
@@ -390,23 +390,24 @@ Page({
       }
     }
   },
-  generateYearRange() {
-    const currentYear = new Date().getFullYear()
-    const yearRange: Array<number|string> = []
-    yearRange.push('全部')
-    for (let i = currentYear; i >= currentYear - 10; i--) {
-      yearRange.push(i)
-    }
-    this.setData({ yearRange })
-  },
   onYearSelectorTap() {
     this.setData({ showYearPicker: true })
   },
-  onYearPickerChange(e: any) {
-    const { value } = e.detail
-    const selectedYear = this.data.yearRange[value[0]]
+  
+  onYearPickerCancel() {
+    this.setData({ showYearPicker: false })
+  },
+  
+  onYearLabelClick(e: any) {
+    const selectedYear = e.currentTarget.dataset.year
     
-    // Filter fuelList and showCardArr by selected year, if not '全部'
+    // Update selected year
+    this.setData({
+      'summaryBoard.year': selectedYear,
+      showYearPicker: false,  // Close popup after selection
+    })
+    
+    // Filter showCardArr by selected year, if not '全部'
     let filteredShowCardArr = this.data.showCardArr
     if (selectedYear !== '全部') {
       filteredShowCardArr = this.data.showCardArr.filter(item => {
@@ -417,14 +418,22 @@ Page({
     }
     
     this.setData({
-      showYearPicker: false,
-      'summaryBoard.year': selectedYear,
       displayCardArr: filteredShowCardArr
-    } as any)
+    })
+    
     this.calculateSummary()
   },
-  onYearPickerCancel() {
-    this.setData({ showYearPicker: false })
+  
+  generateYearRange() {
+    const currentYear = new Date().getFullYear()
+    const yearRange: Array<number|string> = []
+    yearRange.push('全部')
+    // Start from 2020 or current year (whichever is smaller)
+    const startYear = Math.min(2020, currentYear)
+    for (let i = currentYear; i >= startYear; i--) {
+      yearRange.push(i)
+    }
+    this.setData({ yearRange })
   },
   noop() { },
 })

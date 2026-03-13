@@ -129,6 +129,45 @@ page {
 }
 
 /* 年份选择器样式 */
+.year-selector-container {
+  margin-top: 20rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.year-selector-title {
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.year-labels-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.year-label {
+  width: calc(25% - 12rpx);
+  padding: 16rpx 0;
+  text-align: center;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.year-label-active {
+  background: #1989fa;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(25, 137, 250, 0.3);
+}
+
 .year-picker-view {
   height: 300rpx;
   width: 100%;

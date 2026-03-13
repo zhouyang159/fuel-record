@@ -28,24 +28,19 @@
           </view>
         </view>
       </view>
-      <!-- 年份选择器 -->
+      <!-- 年份选择器弹窗 -->
       <van-popup show="{{showYearPicker}}" position="bottom" round close-on-click-overlay bind:close="onYearPickerCancel">
-        <view style="padding: 20rpx;">
-          <view style="text-align: center; font-size: 28rpx; margin-bottom: 20rpx; font-weight: 600;">
-            选择年份
-          </view>
-          <picker-view class="year-picker-view" value="{{[yearRange.indexOf(summaryBoard.year)]}}" bind:change="onYearPickerChange">
-            <picker-view-column>
-              <view wx:for="{{yearRange}}" wx:key="*this" class="year-picker-item">{{item}}</view>
-            </picker-view-column>
-          </picker-view>
-          <view style="display: flex; margin-top: 20rpx; gap: 10rpx;">
-            <van-button plain size="small" style="flex: 1;" bind:tap="onYearPickerCancel">
-              取消
-            </van-button>
-            <van-button type="primary" size="small" style="flex: 1;" bind:tap="onYearPickerCancel">
-              确定
-            </van-button>
+        <view class="year-selector-container">
+          <view class="year-selector-title">选择年份</view>
+          <view class="year-labels-grid">
+            <view 
+              wx:for="{{yearRange}}" 
+              wx:key="*this" 
+              class="year-label {{summaryBoard.year === item ? 'year-label-active' : ''}}"
+              bind:tap="onYearLabelClick"
+              data-year="{{item}}">
+              {{item}}
+            </view>
           </view>
         </view>
       </van-popup>
