@@ -94,7 +94,7 @@ App<IAppOption>({
   fetchCarListByOpenid() {
 
     wx.request({
-      url: `${supabase_url}/dev_car_list?select=*`,
+      url: `${this.globalData.supabaseUrl}/dev_car_list?select=*`,
       method: 'GET',
       header: {
         'apikey': apikey,
@@ -103,13 +103,13 @@ App<IAppOption>({
       },
       success: (res: any) => {
         this.globalData.cars = res.data
-        this.globalData.currentCarId = res.data.length > 0 ? res.data[0]._id : null
+        this.globalData.currentCarId = res.data.length > 0 ? res.data[0].id : null
 
         if (!res.data || res.data.length === 0) {
           // No cars found for this user, create a default one
 
           wx.request({
-            url: `${supabase_url}/dev_car_list`,
+            url: `${this.globalData.supabaseUrl}/dev_car_list`,
             method: 'POST',
             header: {
               'apikey': apikey,

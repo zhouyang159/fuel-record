@@ -32,9 +32,9 @@ Page({
         this.setData({ cars })
         app.globalData.cars = cars
 
-        const currentCarExists = cars.some((car: any) => car._id === app.globalData.currentCarId)
+        const currentCarExists = cars.some((car: any) => car.id === app.globalData.currentCarId)
         if (!currentCarExists) {
-          app.globalData.currentCarId = cars.length > 0 ? cars[0]._id : null
+          app.globalData.currentCarId = cars.length > 0 ? cars[0].id : null
         }
       },
       fail: (err) => {
@@ -45,7 +45,7 @@ Page({
 
   addCar() {
     if (this.data.isMutating) return
-  
+
     if (this.data.cars.length >= 5) {
       wx.showToast({ title: '最多添加 5 辆车', icon: 'error' })
       return
@@ -54,14 +54,14 @@ Page({
     const userNick = (app.globalData.userInfo && (app.globalData.userInfo as any).nickName)
       || (wx.getStorageSync('userInfo') && (wx.getStorageSync('userInfo') as any).nickName)
       || ''
-  
-    let newCar = { 
-      name: `车辆${this.data.cars.length + 1}`, 
+
+    let newCar = {
+      name: `车辆${this.data.cars.length + 1}`,
       userNick,
       _openid: app.globalData.openid
     }
     this.setData({ isMutating: true, mutatingText: '正在添加' })
-  
+
     wx.request({
       url: `${app.globalData.supabaseUrl}/dev_car_list`,
       method: 'POST',
@@ -163,24 +163,24 @@ Page({
 
         wx.showLoading({ title: '保存中...' })
         wx.request({
-          url: `${app.globalData.supabaseUrl}/dev_car_list?id=eq.${carId}&_openid=eq.${app.globalData.openid}`,
-          method: 'POST',
+          url: `${app.globalData.supabaseUrl}/dev_car_list?id=eq.${carId}`,
+          method: 'PATCH',
           header: {
             'apikey': app.globalData.supabaseAnonKey,
             'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
             'Content-Type': 'application/json',
-            'X-HTTP-Method-Override': 'PATCH'
+            'Prefer': 'return=representation'
           },
           data: { name: newName },
           success: () => {
             wx.showToast({ title: '修改成功', icon: 'success' })
-            this.fetchCarList()
           },
           fail: () => {
             wx.showToast({ title: '修改失败', icon: 'error' })
           },
           complete: () => {
             wx.hideLoading()
+            this.fetchCarList()
           }
         })
       }

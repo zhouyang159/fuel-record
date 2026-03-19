@@ -115,6 +115,7 @@ Page({
 
   setCurrentCar() {
     const app = getApp()
+
     if (!app.globalData.cars || app.globalData.cars.length === 0) {
       this.setData({
         currentCar: { name: '暂无车辆' },
@@ -122,7 +123,7 @@ Page({
       return
     }
 
-    const currentCar = app.globalData.cars.find(car => car._id === app.globalData.currentCarId)
+    const currentCar = app.globalData.cars.find(car => car.id === app.globalData.currentCarId)
       || app.globalData.cars[0]
 
     this.setData({
@@ -225,7 +226,7 @@ Page({
           instance.close()
           let deleteItem = this.data.fuelList.find(item => item.id === clickId)
           if (!deleteItem) return
-          wx.cloud.database().collection(FUEL_LIST_TABLE).where({ _id: deleteItem._id }).remove()
+          wx.cloud.database().collection(FUEL_LIST_TABLE).where({ id: deleteItem.id }).remove()
             .then(() => {
               wx.showToast({ title: '删除成功', icon: 'none', duration: 2000 })
               this.fetchFuelListByOpenid()
