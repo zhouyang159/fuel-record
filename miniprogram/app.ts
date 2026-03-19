@@ -1,9 +1,14 @@
 
 const env_table_pre_name = 'dev'
 
+export const apikey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcHF1Y3hlc3V5b3pzZ2dmdXl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NTY3OTIsImV4cCI6MjA4OTEzMjc5Mn0.MrWpPPOjaOKL0IqLS-JgonKTQqOuG319MY2BLyYsnvw'
+
 
 App<IAppOption>({
   globalData: {
+    supabaseUrl: 'https://aopqucxesuyozsggfuyv.supabase.co/rest/v1',
+    supabaseAnonKey: apikey,
+
     userInfo: undefined as WechatMiniprogram.UserInfo | undefined,
     env: 'cloud1-8g65ecjm393c67f1' as string,
     openid: '' as string,
@@ -88,45 +93,46 @@ App<IAppOption>({
 
   fetchCarListByOpenid() {
 
-    wx.cloud.database()
-      .collection(this.globalData.CAR_LIST_TABLE as string)
-      .where({
-        _openid: this.globalData.openid,
-      })
-      .get()
-      .then(res => {
+    wx.request({
+      url: `${supabase_url}/dev_car_list?select=*`,
+      method: 'GET',
+      header: {
+        'apikey': apikey,
+        'Authorization': `Bearer ${apikey}`,
+        'Content-Type': 'application/json'
+      },
+      success: (res: any) => {
         this.globalData.cars = res.data
         this.globalData.currentCarId = res.data.length > 0 ? res.data[0]._id : null
 
         if (!res.data || res.data.length === 0) {
           // No cars found for this user, create a default one
 
-          const carTable = this.globalData.CAR_LIST_TABLE as string
-          wx.cloud.database().collection(carTable).add({ data: { name: '默认车辆1' } })
-            .then(addRes => {
-              const created = [{ _id: addRes._id, name: '默认车辆1' }]
-              this.globalData.cars = created
-              this.globalData.currentCarId = addRes._id
-
-              if (this.globalData.carReadyCallback) {
-                this.globalData.carReadyCallback()
-              }
-            })
-            .catch(err => {
-              wx.showToast({ title: '创建默认车辆失败', icon: 'none' })
-              console.error('创建默认车辆失败：', err)
-              this.globalData.cars = []
-              this.globalData.currentCarId = null
-              if (this.globalData.carReadyCallback) {
-                this.globalData.carReadyCallback()
-              }
-            })
+          wx.request({
+            url: `${supabase_url}/dev_car_list`,
+            method: 'POST',
+            header: {
+              'apikey': apikey,
+              'Authorization': `Bearer ${apikey}`,
+              'Content-Type': 'application/json'
+            },
+            data: {
+              _openid: this.globalData.openid,
+              name: '默认车辆1'
+            },
+            success: () => {
+              this.fetchCarListByOpenid()
+            }
+          })
         }
-
 
         if (this.globalData.carReadyCallback) {
           this.globalData.carReadyCallback()
         }
-      })
-  }
+      },
+      fail: (err) => {
+        console.error(err)
+      }
+    })
+  },
 })

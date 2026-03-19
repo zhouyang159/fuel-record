@@ -2,6 +2,9 @@
 
 interface IAppOption {
   globalData: {
+    supabaseUrl: String,
+    supabaseAnonKey: String,
+    
     userInfo?: WechatMiniprogram.UserInfo,
     env: String,
 

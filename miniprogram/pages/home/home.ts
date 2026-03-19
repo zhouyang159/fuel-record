@@ -65,9 +65,9 @@ Page({
     this.setData({ isRefreshing: true })
     this.fetchFuelListByOpenid()
       .then(list => {
-        this.setData({ 
+        this.setData({
           fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
-          isRefreshing: false 
+          isRefreshing: false
         })
         this.calCost()
         wx.stopPullDownRefresh()
@@ -191,15 +191,24 @@ Page({
     return await db.collection(FUEL_LIST_TABLE).where({ userId }).remove()
   },
   async fetchFuelListByOpenid() {
-    const db = wx.cloud.database()
-    const openid = getApp().globalData.openid as string
-    const carId = getApp().globalData.currentCarId
-    if (!carId) return []
-    wx.showLoading({ title: '加载中...' })
-    let res = await db.collection(FUEL_LIST_TABLE).where({ _openid: openid, carId }).get()
-    wx.hideLoading()
-    res.data.sort((a, b) => b.mileage - a.mileage)
-    return res.data
+    wx.request({
+      url: `${app.globalData.supabaseUrl}/dev_car_list?select=*`,
+      method: 'GET',
+      header: {
+        'apikey': app.globalData.supabaseAnonKey,
+        'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+        'Content-Type': 'application/json'
+      },
+      success(res) {
+        console.log('data111:', res.data)
+      },
+      fail(err) {
+        console.error(err)
+      }
+    })
+
+
+    return []
   },
   onSwipeCellOpen(event) {
     const id = event.currentTarget.dataset.id
@@ -320,7 +329,7 @@ Page({
   calculateSummary() {
     const { fuelList, showCardArr, summaryBoard } = this.data
     const selectedYear = summaryBoard.year
-    
+
     // Filter records by selected year (skip if '全部')
     let filteredList = fuelList
     let filteredShowCardArr = showCardArr
@@ -336,19 +345,19 @@ Page({
         return year === selectedYear
       })
     }
-    
+
     // Calculate total cost
     const totalCost = filteredList.reduce((sum, item) => {
       const pay = Number(item.pay) || 0
       return sum + pay
     }, 0)
-    
+
     // Calculate average fuel consumption from showCardArr
     const validConsumptions = filteredShowCardArr.filter(item => item.fuelConsumption && item.fuelConsumption > 0)
-    const avgFuelConsumption = validConsumptions.length > 0 
+    const avgFuelConsumption = validConsumptions.length > 0
       ? (validConsumptions.reduce((sum, item) => sum + item.fuelConsumption, 0) / validConsumptions.length)
       : 0
-    
+
     // Calculate total mileage (difference between first and last record)
     let totalMileage = 0
     if (filteredList.length >= 2) {
@@ -356,7 +365,7 @@ Page({
       const minMileage = Math.min(...filteredList.map(item => Number(item.mileage) || 0))
       totalMileage = maxMileage - minMileage
     }
-    
+
     this.setData({
       summaryBoard: {
         totalCost: Number(totalCost.toFixed(2)),
@@ -393,20 +402,20 @@ Page({
   onYearSelectorTap() {
     this.setData({ showYearPicker: true })
   },
-  
+
   onYearPickerCancel() {
     this.setData({ showYearPicker: false })
   },
-  
+
   onYearLabelClick(e: any) {
     const selectedYear = e.currentTarget.dataset.year
-    
+
     // Update selected year
     this.setData({
       'summaryBoard.year': selectedYear,
       showYearPicker: false,  // Close popup after selection
     })
-    
+
     // Filter showCardArr by selected year, if not '全部'
     let filteredShowCardArr = this.data.showCardArr
     if (selectedYear !== '全部') {
@@ -416,17 +425,17 @@ Page({
         return year === selectedYear
       })
     }
-    
+
     this.setData({
       displayCardArr: filteredShowCardArr
     })
-    
+
     this.calculateSummary()
   },
-  
+
   generateYearRange() {
     const currentYear = new Date().getFullYear()
-    const yearRange: Array<number|string> = []
+    const yearRange: Array<number | string> = []
     yearRange.push('全部')
     // Start from 2020 or current year (whichever is smaller)
     const startYear = Math.min(2020, currentYear)
