@@ -125,7 +125,7 @@ Page({
       return
     }
 
-    const currentCar = app.globalData.cars.find(car => car.id === app.globalData.currentCarId)
+    const currentCar = app.globalData.cars.find((car: any) => car.id === app.globalData.currentCarId)
       || app.globalData.cars[0]
 
     if (currentCar) {
@@ -193,10 +193,6 @@ Page({
     })
   },
 
-  async removeAllRecordsByUserId(userId: string) {
-    const db = wx.cloud.database()
-    return await db.collection(FUEL_LIST_TABLE).where({ userId }).remove()
-  },
   async fetchFuelListByOpenid() {
     const openid = getApp().globalData.openid as string
     const carId = getApp().globalData.currentCarId
@@ -222,11 +218,11 @@ Page({
       })
     })
   },
-  onSwipeCellOpen(event) {
+  onSwipeCellOpen(event: any) {
     const id = event.currentTarget.dataset.id
     this.setData({ swipeCellId: id })
   },
-  onSwipeCellClose(event) {
+  onSwipeCellClose(event: any) {
     const clickId = event.currentTarget.dataset.id
     const { position, instance } = event.detail
     switch (position) {
@@ -376,9 +372,9 @@ Page({
     }, 0)
 
     // Calculate average fuel consumption from showCardArr
-    const validConsumptions = filteredShowCardArr.filter(item => item.fuelConsumption && item.fuelConsumption > 0)
+    const validConsumptions = filteredShowCardArr.filter(item => Number(item.fuelConsumption || 0) > 0)
     const avgFuelConsumption = validConsumptions.length > 0
-      ? (validConsumptions.reduce((sum, item) => sum + item.fuelConsumption, 0) / validConsumptions.length)
+      ? (validConsumptions.reduce((sum, item) => sum + Number(item.fuelConsumption || 0), 0) / validConsumptions.length)
       : 0
 
     // Calculate total mileage (difference between first and last record)

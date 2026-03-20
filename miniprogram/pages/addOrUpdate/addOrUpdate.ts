@@ -85,8 +85,12 @@ Page({
       return
     }
 
-    const currentCar = app.globalData.cars.find(car => car.id === app.globalData.currentCarId)
+    const currentCar = app.globalData.cars.find((car: any) => car.id === app.globalData.currentCarId)
       || app.globalData.cars[0]
+
+    if (currentCar) {
+      app.globalData.currentCarId = currentCar.id
+    }
 
     this.setData({ currentCar: currentCar || { name: '未知车辆' } })
   },
@@ -279,9 +283,29 @@ Page({
     delete payload.diffMile
     delete payload.fuelConsumption
 
+    // Keep numeric fields compatible with Supabase numeric/int columns.
+    const toNullableFloat = (value: any) => {
+      if (value === '' || value === null || value === undefined) return null
+      const num = Number(value)
+      return Number.isNaN(num) ? null : Number(num.toFixed(2))
+    }
+    const toNullableInt = (value: any) => {
+      if (value === '' || value === null || value === undefined) return null
+      const num = Number(value)
+      return Number.isNaN(num) ? null : Math.trunc(num)
+    }
+
+    payload.mileage = toNullableInt(payload.mileage)
+    payload.price = toNullableFloat(payload.price)
+    payload.realPrice = toNullableFloat(payload.realPrice)
+    payload.quantity = toNullableFloat(payload.quantity)
+    payload.pay = toNullableFloat(payload.pay)
+    payload.realPay = toNullableFloat(payload.realPay)
+    payload.discountAmount = toNullableFloat(payload.discountAmount)
+
     wx.request({
       url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?id=eq.${recordId}`,
-      method: 'PATCH',
+      method: 'PATCH' as any,
       header: {
         'apikey': app.globalData.supabaseAnonKey,
         'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,

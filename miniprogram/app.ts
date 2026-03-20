@@ -50,7 +50,11 @@ App<IAppOption>({
       wx.cloud.callFunction({
         name: 'getOpenID',
         success: (res) => {
-          this.globalData.openid = res.result.openid;
+          const result = (res && res.result ? res.result : {}) as any
+          this.globalData.openid = String(result.openid || '')
+          if (!this.globalData.openid) {
+            console.error('未获取到OpenID')
+          }
           if (this.globalData.openidReadyCallback) {
             this.globalData.openidReadyCallback();
           }
@@ -102,10 +106,15 @@ App<IAppOption>({
         'Content-Type': 'application/json'
       },
       success: (res: any) => {
-        this.globalData.cars = res.data
-        this.globalData.currentCarId = res.data.length > 0 ? res.data[0].id : null
+        const cars = (res.data || []) as any[]
+        this.globalData.cars = cars
 
-        if (!res.data || res.data.length === 0) {
+        const currentExists = cars.some((car: any) => car.id === this.globalData.currentCarId)
+        if (!currentExists) {
+          this.globalData.currentCarId = cars.length > 0 ? cars[0].id : null
+        }
+
+        if (!cars || cars.length === 0) {
           // No cars found for this user, create a default one
 
           wx.request({
