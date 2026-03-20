@@ -63,6 +63,8 @@ Page({
 
   onPullDownRefresh() {
     this.setData({ isRefreshing: true })
+    this.setCurrentCar()
+
     this.fetchFuelListByOpenid()
       .then(list => {
         this.setData({
@@ -125,6 +127,10 @@ Page({
 
     const currentCar = app.globalData.cars.find(car => car.id === app.globalData.currentCarId)
       || app.globalData.cars[0]
+
+    if (currentCar) {
+      app.globalData.currentCarId = currentCar.id
+    }
 
     this.setData({
       currentCar: currentCar || { name: '未知车辆' },
@@ -192,24 +198,29 @@ Page({
     return await db.collection(FUEL_LIST_TABLE).where({ userId }).remove()
   },
   async fetchFuelListByOpenid() {
-    wx.request({
-      url: `${app.globalData.supabaseUrl}/dev_car_list?select=*`,
-      method: 'GET',
-      header: {
-        'apikey': app.globalData.supabaseAnonKey,
-        'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
-        'Content-Type': 'application/json'
-      },
-      success(res) {
-        console.log('data111:', res.data)
-      },
-      fail(err) {
-        console.error(err)
-      }
+    const openid = getApp().globalData.openid as string
+    const carId = getApp().globalData.currentCarId
+    if (!carId) return []
+
+    return new Promise((resolve) => {
+      wx.request({
+        url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?select=*&_openid=eq.${openid}&carId=eq.${carId}&order=mileage.desc`,
+        method: 'GET',
+        header: {
+          'apikey': app.globalData.supabaseAnonKey,
+          'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+          'Content-Type': 'application/json'
+        },
+        success(res) {
+          const data = res.data || []
+          resolve(data)
+        },
+        fail(err) {
+          console.error(err)
+          resolve([])
+        }
+      })
     })
-
-
-    return []
   },
   onSwipeCellOpen(event) {
     const id = event.currentTarget.dataset.id
@@ -226,15 +237,26 @@ Page({
           instance.close()
           let deleteItem = this.data.fuelList.find(item => item.id === clickId)
           if (!deleteItem) return
-          wx.cloud.database().collection(FUEL_LIST_TABLE).where({ id: deleteItem.id }).remove()
-            .then(() => {
+          wx.request({
+            url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?id=eq.${deleteItem.id}`,
+            method: 'DELETE',
+            header: {
+              'apikey': app.globalData.supabaseAnonKey,
+              'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+              'Content-Type': 'application/json'
+            },
+            success: () => {
               wx.showToast({ title: '删除成功', icon: 'none', duration: 2000 })
               this.fetchFuelListByOpenid()
                 .then(list => {
                   this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
                   this.calCost()
                 })
-            })
+            },
+            fail: () => {
+              wx.showToast({ title: '删除失败', icon: 'none', duration: 2000 })
+            }
+          })
         })
         break
     }

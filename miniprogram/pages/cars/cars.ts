@@ -20,7 +20,7 @@ Page({
     }
 
     wx.request({
-      url: `${app.globalData.supabaseUrl}/dev_car_list?select=*&_openid=eq.${app.globalData.openid}`,
+      url: `${app.globalData.supabaseUrl}/${app.globalData.CAR_LIST_TABLE}?select=*&_openid=eq.${app.globalData.openid}&order=created_at.desc`,
       method: 'GET',
       header: {
         'apikey': app.globalData.supabaseAnonKey,
@@ -63,7 +63,7 @@ Page({
     this.setData({ isMutating: true, mutatingText: '正在添加' })
 
     wx.request({
-      url: `${app.globalData.supabaseUrl}/dev_car_list`,
+      url: `${app.globalData.supabaseUrl}/${app.globalData.CAR_LIST_TABLE}`,
       method: 'POST',
       header: {
         'apikey': app.globalData.supabaseAnonKey,
@@ -106,7 +106,7 @@ Page({
 
     // Remove fuel records first, then delete car only if that succeeds
     wx.request({
-      url: `${app.globalData.supabaseUrl}/dev_fuel_list?carId=eq.${carId}&_openid=eq.${app.globalData.openid}`,
+      url: `${app.globalData.supabaseUrl}/${app.globalData.FUEL_LIST_TABLE}?carId=eq.${carId}`,
       method: 'DELETE',
       header: {
         'apikey': app.globalData.supabaseAnonKey,
@@ -116,7 +116,7 @@ Page({
       success: () => {
         // Now delete the car
         wx.request({
-          url: `${app.globalData.supabaseUrl}/dev_car_list?id=eq.${carId}&_openid=eq.${app.globalData.openid}`,
+          url: `${app.globalData.supabaseUrl}/${app.globalData.CAR_LIST_TABLE}?id=eq.${carId}`,
           method: 'DELETE',
           header: {
             'apikey': app.globalData.supabaseAnonKey,
@@ -163,7 +163,7 @@ Page({
 
         wx.showLoading({ title: '保存中...' })
         wx.request({
-          url: `${app.globalData.supabaseUrl}/dev_car_list?id=eq.${carId}`,
+          url: `${app.globalData.supabaseUrl}/${app.globalData.CAR_LIST_TABLE}?id=eq.${carId}`,
           method: 'PATCH',
           header: {
             'apikey': app.globalData.supabaseAnonKey,

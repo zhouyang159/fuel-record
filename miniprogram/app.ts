@@ -1,7 +1,7 @@
 
 const env_table_pre_name = 'dev'
 
-export const apikey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcHF1Y3hlc3V5b3pzZ2dmdXl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NTY3OTIsImV4cCI6MjA4OTEzMjc5Mn0.MrWpPPOjaOKL0IqLS-JgonKTQqOuG319MY2BLyYsnvw'
+const apikey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcHF1Y3hlc3V5b3pzZ2dmdXl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NTY3OTIsImV4cCI6MjA4OTEzMjc5Mn0.MrWpPPOjaOKL0IqLS-JgonKTQqOuG319MY2BLyYsnvw'
 
 
 App<IAppOption>({
@@ -94,7 +94,7 @@ App<IAppOption>({
   fetchCarListByOpenid() {
 
     wx.request({
-      url: `${this.globalData.supabaseUrl}/dev_car_list?select=*`,
+      url: `${this.globalData.supabaseUrl}/${this.globalData.CAR_LIST_TABLE}?select=*&_openid=eq.${this.globalData.openid}&order=created_at.desc`,
       method: 'GET',
       header: {
         'apikey': apikey,
@@ -109,7 +109,7 @@ App<IAppOption>({
           // No cars found for this user, create a default one
 
           wx.request({
-            url: `${this.globalData.supabaseUrl}/dev_car_list`,
+            url: `${this.globalData.supabaseUrl}/${this.globalData.CAR_LIST_TABLE}`,
             method: 'POST',
             header: {
               'apikey': apikey,
