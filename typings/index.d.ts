@@ -2,18 +2,21 @@
 
 interface IAppOption {
   globalData: {
+    supabaseUrl: string,
+    supabaseAnonKey: string,
+    
     userInfo?: WechatMiniprogram.UserInfo,
-    env: String,
+    env: string,
 
-    openid: String,
-    openidReadyCallback: WechatMiniprogram.GetOpenUserInfoSuccessCallback | null,
-    carReadyCallback: Function | null,
-    CAR_LIST_TABLE: String,
-    FUEL_LIST_TABLE: String,
-    currentCarId: String | null,
+    openid: string,
+    openidReadyCallback: (() => void) | null,
+    carReadyCallback: (() => void) | null,
+    CAR_LIST_TABLE: string,
+    FUEL_LIST_TABLE: string,
+    currentCarId: string | null,
     cars: any[],
   },
 
   fetchCarListByOpenid: () => void,
-  userInfoReadyCallback?: () => void,
+  userInfoReadyCallback?: (res?: WechatMiniprogram.GetUserInfoSuccessCallbackResult) => void,
 }

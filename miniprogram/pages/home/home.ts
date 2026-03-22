@@ -63,11 +63,13 @@ Page({
 
   onPullDownRefresh() {
     this.setData({ isRefreshing: true })
+    this.setCurrentCar()
+
     this.fetchFuelListByOpenid()
       .then(list => {
-        this.setData({ 
+        this.setData({
           fuelList: JSON.parse(JSON.stringify(list)) as RecordType[],
-          isRefreshing: false 
+          isRefreshing: false
         })
         this.calCost()
         wx.stopPullDownRefresh()
@@ -115,6 +117,7 @@ Page({
 
   setCurrentCar() {
     const app = getApp()
+
     if (!app.globalData.cars || app.globalData.cars.length === 0) {
       this.setData({
         currentCar: { name: '暂无车辆' },
@@ -122,8 +125,12 @@ Page({
       return
     }
 
-    const currentCar = app.globalData.cars.find(car => car._id === app.globalData.currentCarId)
+    const currentCar = app.globalData.cars.find((car: any) => car.id === app.globalData.currentCarId)
       || app.globalData.cars[0]
+
+    if (currentCar) {
+      app.globalData.currentCarId = currentCar.id
+    }
 
     this.setData({
       currentCar: currentCar || { name: '未知车辆' },
@@ -186,26 +193,41 @@ Page({
     })
   },
 
-  async removeAllRecordsByUserId(userId: string) {
-    const db = wx.cloud.database()
-    return await db.collection(FUEL_LIST_TABLE).where({ userId }).remove()
-  },
   async fetchFuelListByOpenid() {
-    const db = wx.cloud.database()
     const openid = getApp().globalData.openid as string
     const carId = getApp().globalData.currentCarId
     if (!carId) return []
-    wx.showLoading({ title: '加载中...' })
-    let res = await db.collection(FUEL_LIST_TABLE).where({ _openid: openid, carId }).get()
-    wx.hideLoading()
-    res.data.sort((a, b) => b.mileage - a.mileage)
-    return res.data
+
+    return new Promise((resolve) => {
+      wx.showLoading({ title: '加载中...', mask: true })
+
+      wx.request({
+        url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?select=*&_openid=eq.${openid}&carId=eq.${carId}&order=mileage.desc`,
+        method: 'GET',
+        header: {
+          'apikey': app.globalData.supabaseAnonKey,
+          'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+          'Content-Type': 'application/json'
+        },
+        success(res) {
+          const data = res.data || []
+          resolve(data)
+        },
+        fail(err) {
+          console.error(err)
+          resolve([])
+        },
+        complete() {
+          wx.hideLoading()
+        }
+      })
+    })
   },
-  onSwipeCellOpen(event) {
+  onSwipeCellOpen(event: any) {
     const id = event.currentTarget.dataset.id
     this.setData({ swipeCellId: id })
   },
-  onSwipeCellClose(event) {
+  onSwipeCellClose(event: any) {
     const clickId = event.currentTarget.dataset.id
     const { position, instance } = event.detail
     switch (position) {
@@ -216,15 +238,26 @@ Page({
           instance.close()
           let deleteItem = this.data.fuelList.find(item => item.id === clickId)
           if (!deleteItem) return
-          wx.cloud.database().collection(FUEL_LIST_TABLE).where({ _id: deleteItem._id }).remove()
-            .then(() => {
+          wx.request({
+            url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?id=eq.${deleteItem.id}`,
+            method: 'DELETE',
+            header: {
+              'apikey': app.globalData.supabaseAnonKey,
+              'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+              'Content-Type': 'application/json'
+            },
+            success: () => {
               wx.showToast({ title: '删除成功', icon: 'none', duration: 2000 })
               this.fetchFuelListByOpenid()
                 .then(list => {
                   this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
                   this.calCost()
                 })
-            })
+            },
+            fail: () => {
+              wx.showToast({ title: '删除失败', icon: 'none', duration: 2000 })
+            }
+          })
         })
         break
     }
@@ -320,7 +353,7 @@ Page({
   calculateSummary() {
     const { fuelList, showCardArr, summaryBoard } = this.data
     const selectedYear = summaryBoard.year
-    
+
     // Filter records by selected year (skip if '全部')
     let filteredList = fuelList
     let filteredShowCardArr = showCardArr
@@ -336,19 +369,19 @@ Page({
         return year === selectedYear
       })
     }
-    
+
     // Calculate total cost
     const totalCost = filteredList.reduce((sum, item) => {
       const pay = Number(item.pay) || 0
       return sum + pay
     }, 0)
-    
+
     // Calculate average fuel consumption from showCardArr
-    const validConsumptions = filteredShowCardArr.filter(item => item.fuelConsumption && item.fuelConsumption > 0)
-    const avgFuelConsumption = validConsumptions.length > 0 
-      ? (validConsumptions.reduce((sum, item) => sum + item.fuelConsumption, 0) / validConsumptions.length)
+    const validConsumptions = filteredShowCardArr.filter(item => Number(item.fuelConsumption || 0) > 0)
+    const avgFuelConsumption = validConsumptions.length > 0
+      ? (validConsumptions.reduce((sum, item) => sum + Number(item.fuelConsumption || 0), 0) / validConsumptions.length)
       : 0
-    
+
     // Calculate total mileage (difference between first and last record)
     let totalMileage = 0
     if (filteredList.length >= 2) {
@@ -356,7 +389,7 @@ Page({
       const minMileage = Math.min(...filteredList.map(item => Number(item.mileage) || 0))
       totalMileage = maxMileage - minMileage
     }
-    
+
     this.setData({
       summaryBoard: {
         totalCost: Number(totalCost.toFixed(2)),
@@ -393,20 +426,20 @@ Page({
   onYearSelectorTap() {
     this.setData({ showYearPicker: true })
   },
-  
+
   onYearPickerCancel() {
     this.setData({ showYearPicker: false })
   },
-  
+
   onYearLabelClick(e: any) {
     const selectedYear = e.currentTarget.dataset.year
-    
+
     // Update selected year
     this.setData({
       'summaryBoard.year': selectedYear,
       showYearPicker: false,  // Close popup after selection
     })
-    
+
     // Filter showCardArr by selected year, if not '全部'
     let filteredShowCardArr = this.data.showCardArr
     if (selectedYear !== '全部') {
@@ -416,17 +449,17 @@ Page({
         return year === selectedYear
       })
     }
-    
+
     this.setData({
       displayCardArr: filteredShowCardArr
     })
-    
+
     this.calculateSummary()
   },
-  
+
   generateYearRange() {
     const currentYear = new Date().getFullYear()
-    const yearRange: Array<number|string> = []
+    const yearRange: Array<number | string> = []
     yearRange.push('全部')
     // Start from 2020 or current year (whichever is smaller)
     const startYear = Math.min(2020, currentYear)

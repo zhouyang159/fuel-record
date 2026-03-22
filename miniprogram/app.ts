@@ -1,9 +1,14 @@
 
-const env_table_pre_name = 'dev'
+const env_table_pre_name = 'pro' // 'dev' or 'pro'
+
+const apikey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcHF1Y3hlc3V5b3pzZ2dmdXl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NTY3OTIsImV4cCI6MjA4OTEzMjc5Mn0.MrWpPPOjaOKL0IqLS-JgonKTQqOuG319MY2BLyYsnvw'
 
 
 App<IAppOption>({
   globalData: {
+    supabaseUrl: 'https://aopqucxesuyozsggfuyv.supabase.co/rest/v1',
+    supabaseAnonKey: apikey,
+
     userInfo: undefined as WechatMiniprogram.UserInfo | undefined,
     env: 'cloud1-8g65ecjm393c67f1' as string,
     openid: '' as string,
@@ -45,7 +50,11 @@ App<IAppOption>({
       wx.cloud.callFunction({
         name: 'getOpenID',
         success: (res) => {
-          this.globalData.openid = res.result.openid;
+          const result = (res && res.result ? res.result : {}) as any
+          this.globalData.openid = String(result.openid || '')
+          if (!this.globalData.openid) {
+            console.error('未获取到OpenID')
+          }
           if (this.globalData.openidReadyCallback) {
             this.globalData.openidReadyCallback();
           }
@@ -88,45 +97,51 @@ App<IAppOption>({
 
   fetchCarListByOpenid() {
 
-    wx.cloud.database()
-      .collection(this.globalData.CAR_LIST_TABLE as string)
-      .where({
-        _openid: this.globalData.openid,
-      })
-      .get()
-      .then(res => {
-        this.globalData.cars = res.data
-        this.globalData.currentCarId = res.data.length > 0 ? res.data[0]._id : null
+    wx.request({
+      url: `${this.globalData.supabaseUrl}/${this.globalData.CAR_LIST_TABLE}?select=*&_openid=eq.${this.globalData.openid}&order=created_at.desc`,
+      method: 'GET',
+      header: {
+        'apikey': apikey,
+        'Authorization': `Bearer ${apikey}`,
+        'Content-Type': 'application/json'
+      },
+      success: (res: any) => {
+        const cars = (res.data || []) as any[]
+        this.globalData.cars = cars
 
-        if (!res.data || res.data.length === 0) {
-          // No cars found for this user, create a default one
-
-          const carTable = this.globalData.CAR_LIST_TABLE as string
-          wx.cloud.database().collection(carTable).add({ data: { name: '默认车辆1' } })
-            .then(addRes => {
-              const created = [{ _id: addRes._id, name: '默认车辆1' }]
-              this.globalData.cars = created
-              this.globalData.currentCarId = addRes._id
-
-              if (this.globalData.carReadyCallback) {
-                this.globalData.carReadyCallback()
-              }
-            })
-            .catch(err => {
-              wx.showToast({ title: '创建默认车辆失败', icon: 'none' })
-              console.error('创建默认车辆失败：', err)
-              this.globalData.cars = []
-              this.globalData.currentCarId = null
-              if (this.globalData.carReadyCallback) {
-                this.globalData.carReadyCallback()
-              }
-            })
+        const currentExists = cars.some((car: any) => car.id === this.globalData.currentCarId)
+        if (!currentExists) {
+          this.globalData.currentCarId = cars.length > 0 ? cars[0].id : null
         }
 
+        if (!cars || cars.length === 0) {
+          // No cars found for this user, create a default one
+
+          wx.request({
+            url: `${this.globalData.supabaseUrl}/${this.globalData.CAR_LIST_TABLE}`,
+            method: 'POST',
+            header: {
+              'apikey': apikey,
+              'Authorization': `Bearer ${apikey}`,
+              'Content-Type': 'application/json'
+            },
+            data: {
+              _openid: this.globalData.openid,
+              name: '默认车辆1'
+            },
+            success: () => {
+              this.fetchCarListByOpenid()
+            }
+          })
+        }
 
         if (this.globalData.carReadyCallback) {
           this.globalData.carReadyCallback()
         }
-      })
-  }
+      },
+      fail: (err) => {
+        console.error(err)
+      }
+    })
+  },
 })

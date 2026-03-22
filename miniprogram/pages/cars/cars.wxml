@@ -1,6 +1,6 @@
 <view class="cars-page">
-  <view wx:for="{{cars}}" wx:key="_id" class="car-row">
-    <view class="car-main" bind:tap="setCurrentCar" data-id="{{item._id}}">
+  <view wx:for="{{cars}}" wx:key="id" class="car-row">
+    <view class="car-main" bind:tap="setCurrentCar" data-id="{{item.id}}">
       <text class="car-icon">🚗</text>
       <text class="car-name">{{item.name}}</text>
     </view>
@@ -13,7 +13,7 @@
         disabled="{{isMutating}}"
         custom-style="min-width: 64rpx; width: 64rpx; padding: 0;"
         bind:tap="renameCar"
-        data-id="{{item._id}}"
+        data-id="{{item.id}}"
         data-name="{{item.name}}"
       ></van-button>
       <van-button
@@ -23,7 +23,7 @@
         disabled="{{isMutating}}"
         custom-style="min-width: 64rpx; width: 64rpx; padding: 0; margin-left: 12rpx;"
         bind:tap="deleteCar"
-        data-id="{{item._id}}"
+        data-id="{{item.id}}"
       ></van-button>
     </view>
   </view>
