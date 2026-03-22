@@ -20,7 +20,7 @@ Page({
     }
 
     wx.request({
-      url: `${app.globalData.supabaseUrl}/${app.globalData.CAR_LIST_TABLE}?select=*&_openid=eq.${app.globalData.openid}&order=created_at.desc`,
+      url: `${app.globalData.supabaseUrl}/${app.globalData.CAR_LIST_TABLE}?select=*&_openid=eq.${app.globalData.openid}&order=created_at.asc`,
       method: 'GET',
       header: {
         'apikey': app.globalData.supabaseAnonKey,
@@ -100,23 +100,22 @@ Page({
       return
     }
 
-    const carId = event.currentTarget.dataset.id
+    wx.showModal({
+      title: '删除车辆',
+      content: '确定要删除这辆车吗？这将删除与该车相关的所有加油记录，且无法恢复。',
+      confirmText: '删除',
+      confirmColor: '#d9534f',
+      cancelText: '取消',
+      success: (res) => {
+        if (!res.confirm) return
 
-    this.setData({ isMutating: true, mutatingText: '正在删除' })
+        const carId = event.currentTarget.dataset.id
 
-    // Remove fuel records first, then delete car only if that succeeds
-    wx.request({
-      url: `${app.globalData.supabaseUrl}/${app.globalData.FUEL_LIST_TABLE}?carId=eq.${carId}`,
-      method: 'DELETE',
-      header: {
-        'apikey': app.globalData.supabaseAnonKey,
-        'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-      },
-      success: () => {
-        // Now delete the car
+        this.setData({ isMutating: true, mutatingText: '正在删除' })
+
+        // Remove fuel records first, then delete car only if that succeeds
         wx.request({
-          url: `${app.globalData.supabaseUrl}/${app.globalData.CAR_LIST_TABLE}?id=eq.${carId}`,
+          url: `${app.globalData.supabaseUrl}/${app.globalData.FUEL_LIST_TABLE}?carId=eq.${carId}`,
           method: 'DELETE',
           header: {
             'apikey': app.globalData.supabaseAnonKey,
@@ -124,21 +123,33 @@ Page({
             'Content-Type': 'application/json',
           },
           success: () => {
-            wx.showToast({ title: '删除成功', icon: 'success' })
-            this.fetchCarList()
+            // Now delete the car
+            wx.request({
+              url: `${app.globalData.supabaseUrl}/${app.globalData.CAR_LIST_TABLE}?id=eq.${carId}`,
+              method: 'DELETE',
+              header: {
+                'apikey': app.globalData.supabaseAnonKey,
+                'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+                'Content-Type': 'application/json',
+              },
+              success: () => {
+                wx.showToast({ title: '删除成功', icon: 'success' })
+                this.fetchCarList()
+              },
+              fail: () => {
+                wx.showToast({ title: '删除失败', icon: 'error' })
+              },
+              complete: () => {
+                this.setData({ isMutating: false, mutatingText: '' })
+              }
+            })
           },
-          fail: () => {
-            wx.showToast({ title: '删除失败', icon: 'error' })
-          },
-          complete: () => {
+          fail: (err) => {
+            console.error('deleteCar error', err)
+            wx.showToast({ title: '删除失败，请稍后重试', icon: 'error' })
             this.setData({ isMutating: false, mutatingText: '' })
           }
         })
-      },
-      fail: (err) => {
-        console.error('deleteCar error', err)
-        wx.showToast({ title: '删除失败，请稍后重试', icon: 'error' })
-        this.setData({ isMutating: false, mutatingText: '' })
       }
     })
   },

@@ -199,6 +199,8 @@ Page({
     if (!carId) return []
 
     return new Promise((resolve) => {
+      wx.showLoading({ title: '加载中...', mask: true })
+
       wx.request({
         url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?select=*&_openid=eq.${openid}&carId=eq.${carId}&order=mileage.desc`,
         method: 'GET',
@@ -214,6 +216,9 @@ Page({
         fail(err) {
           console.error(err)
           resolve([])
+        },
+        complete() {
+          wx.hideLoading()
         }
       })
     })
