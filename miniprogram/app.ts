@@ -1,12 +1,15 @@
 
 const env_table_pre_name = 'pro' // 'dev' or 'pro'
+const supabaseProjectUrl = 'https://aopqucxesuyozsggfuyv.supabase.co'
 
 const apikey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcHF1Y3hlc3V5b3pzZ2dmdXl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NTY3OTIsImV4cCI6MjA4OTEzMjc5Mn0.MrWpPPOjaOKL0IqLS-JgonKTQqOuG319MY2BLyYsnvw'
 
 
 App<IAppOption>({
   globalData: {
-    supabaseUrl: 'https://aopqucxesuyozsggfuyv.supabase.co/rest/v1',
+    supabaseUrl: `${supabaseProjectUrl}/rest/v1`,
+    supabaseFunctionsUrl: `${supabaseProjectUrl}/functions/v1`,
+    wechatOpenIdFunctionName: 'wechat-openid',
     supabaseAnonKey: apikey,
 
     userInfo: undefined as WechatMiniprogram.UserInfo | undefined,
@@ -22,15 +25,15 @@ App<IAppOption>({
   onLaunch() {
     const updateManager = wx.getUpdateManager()
 
-    updateManager.onCheckForUpdate(function (res) {
+    updateManager.onCheckForUpdate((res) => {
       console.log('hasUpdate', res.hasUpdate)
     })
 
-    updateManager.onUpdateReady(function () {
+    updateManager.onUpdateReady( () => {
       wx.showModal({
         title: '更新提示',
         content: '新版本已经准备好，是否重启应用？',
-        success(res) {
+        success: (res) => {
           if (res.confirm) {
             updateManager.applyUpdate()
           }
@@ -38,61 +41,104 @@ App<IAppOption>({
       })
     })
 
-    if (!wx.cloud) {
-      console.error("请使用 2.2.3 或以上的基础库以使用云能力");
-    } else {
-      wx.cloud.init({
-        env: this.globalData.env,
-        traceUser: true,
-      });
+    wx.showLoading({ title: '' })
+    this.getWechatOpenId()
+      .then(() => {
+        this.fetchCarListByOpenid()
+      })
+      .catch((err) => {
+        console.error('获取 OpenID 失败：', err)
+        wx.showToast({
+          title: '登录失败',
+          icon: 'error'
+        })
+      })
+      .finally(() => {
+        wx.hideLoading()
+      })
 
-      wx.showLoading({ title: '' })
-      wx.cloud.callFunction({
-        name: 'getOpenID',
-        success: (res) => {
-          const result = (res && res.result ? res.result : {}) as any
-          this.globalData.openid = String(result.openid || '')
-          if (!this.globalData.openid) {
-            console.error('未获取到OpenID')
-          }
-          if (this.globalData.openidReadyCallback) {
-            this.globalData.openidReadyCallback();
-          }
-          wx.hideLoading();
+    // try to load user info if already authorized / stored
+    wx.getSetting({
+      success: (settingRes) => {
+        const hasAuth = settingRes.authSetting && settingRes.authSetting['scope.userInfo']
+        if (hasAuth) {
+          wx.getUserInfo({
+            success: (userRes) => {
 
-          // Fetch car list after we have the openid
-          this.fetchCarListByOpenid();
+              this.globalData.userInfo = userRes.userInfo
+              try { wx.setStorageSync('userInfo', userRes.userInfo) } catch (e) { /* ignore */ }
+              if (this.userInfoReadyCallback) this.userInfoReadyCallback(userRes)
+            },
+          })
+        } else {
+          // fallback: try reading from storage (if previously saved)
+          try {
+            const stored = wx.getStorageSync('userInfo')
+            if (stored) this.globalData.userInfo = stored
+          } catch (e) { }
+        }
+      }
+    })
+  },
+
+  getWechatOpenId() {
+    return new Promise<string>((resolve, reject) => {
+      wx.login({
+        success: (loginRes) => {
+          const code = loginRes.code
+
+          if (!code) {
+            reject(new Error('wx.login 未返回 code'))
+            return
+          }
+
+          wx.request({
+            url: `${this.globalData.supabaseFunctionsUrl}/${this.globalData.wechatOpenIdFunctionName}`,
+            method: 'POST',
+            header: {
+              'apikey': this.globalData.supabaseAnonKey,
+              'Authorization': `Bearer ${this.globalData.supabaseAnonKey}`,
+              'Content-Type': 'application/json'
+            },
+            data: { code },
+            success: (res: WechatMiniprogram.RequestSuccessCallbackResult<any>) => {
+              const result = (res.data || {}) as {
+                openid?: string,
+                error?: string,
+                errcode?: number,
+                errmsg?: string,
+              }
+
+              if (res.statusCode >= 400) {
+                reject(new Error(result.error || `Edge Function 请求失败，状态码：${res.statusCode}`))
+                return
+              }
+
+              const openid = String(result.openid || '')
+
+              if (!openid) {
+                reject(new Error(result.errmsg || result.error || 'Edge Function 未返回 openid'))
+                return
+              }
+
+              this.globalData.openid = openid
+
+              if (this.globalData.openidReadyCallback) {
+                this.globalData.openidReadyCallback()
+              }
+
+              resolve(openid)
+            },
+            fail: (err) => {
+              reject(err)
+            }
+          })
         },
         fail: (err) => {
-          console.error('云函数调用失败：', err);
-          wx.hideLoading();
-        },
-      });
-
-
-      // try to load user info if already authorized / stored
-      wx.getSetting({
-        success: (settingRes) => {
-          const hasAuth = settingRes.authSetting && settingRes.authSetting['scope.userInfo']
-          if (hasAuth) {
-            wx.getUserInfo({
-              success: (userRes) => {
-
-                this.globalData.userInfo = userRes.userInfo
-                try { wx.setStorageSync('userInfo', userRes.userInfo) } catch (e) { /* ignore */ }
-                if (this.userInfoReadyCallback) this.userInfoReadyCallback(userRes)
-              },
-            })
-          } else {
-            // fallback: try reading from storage (if previously saved)
-            try {
-              const stored = wx.getStorageSync('userInfo')
-              if (stored) this.globalData.userInfo = stored
-            } catch (e) { }
-          }
+          reject(err)
         }
       })
-    }
+    })
   },
 
   fetchCarListByOpenid() {

@@ -3,6 +3,8 @@
 interface IAppOption {
   globalData: {
     supabaseUrl: string,
+    supabaseFunctionsUrl: string,
+    wechatOpenIdFunctionName: string,
     supabaseAnonKey: string,
     
     userInfo?: WechatMiniprogram.UserInfo,
@@ -17,6 +19,7 @@ interface IAppOption {
     cars: any[],
   },
 
+  getWechatOpenId: () => Promise<string>,
   fetchCarListByOpenid: () => void,
   userInfoReadyCallback?: (res?: WechatMiniprogram.GetUserInfoSuccessCallbackResult) => void,
 }

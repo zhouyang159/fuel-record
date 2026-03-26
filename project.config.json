@@ -47,5 +47,6 @@
     "include": []
   },
   "appid": "wxb6f540900e2e904a",
+  "appSecret": "2bc5ddeda40e188edd9ca3e2d0432d80",
   "cloudfunctionRoot": "cloudfunctions/"
 }
