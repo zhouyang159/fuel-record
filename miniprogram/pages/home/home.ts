@@ -1,4 +1,5 @@
 ﻿import { RecordType, ShowCardType } from '../../utils/types'
+import { CURRENT_CAR_ID_STORAGE_KEY } from '../../utils/constants'
 import Dialog from '../../miniprogram_npm/@vant/weapp/dialog/dialog'
 
 const app = getApp()
@@ -130,6 +131,11 @@ Page({
 
     if (currentCar) {
       app.globalData.currentCarId = currentCar.id
+      try {
+        wx.setStorageSync(CURRENT_CAR_ID_STORAGE_KEY, currentCar.id)
+      } catch (e) {
+        console.error('缓存当前车辆失败', e)
+      }
     }
 
     this.setData({
@@ -167,6 +173,11 @@ Page({
 
 
     app.globalData.currentCarId = carId
+    try {
+      wx.setStorageSync(CURRENT_CAR_ID_STORAGE_KEY, carId)
+    } catch (e) {
+      console.error('缓存当前车辆失败', e)
+    }
     this.syncCarList()
     this.setCurrentCar()
     this.closeCarPopup()

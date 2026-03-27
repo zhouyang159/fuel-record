@@ -1,4 +1,6 @@
 
+import { CURRENT_CAR_ID_STORAGE_KEY } from './utils/constants'
+
 const env_table_pre_name = 'pro' // 'dev' or 'pro'
 const supabaseProjectUrl = 'https://aopqucxesuyozsggfuyv.supabase.co'
 
@@ -40,6 +42,15 @@ App<IAppOption>({
         }
       })
     })
+
+    try {
+      const storedCurrentCarId = wx.getStorageSync(CURRENT_CAR_ID_STORAGE_KEY)
+      if (storedCurrentCarId) {
+        this.globalData.currentCarId = storedCurrentCarId
+      }
+    } catch (e) {
+      console.error('读取当前车辆缓存失败：', e)
+    }
 
     wx.showLoading({ title: '' })
     this.getWechatOpenId()
@@ -144,7 +155,7 @@ App<IAppOption>({
   fetchCarListByOpenid() {
 
     wx.request({
-      url: `${this.globalData.supabaseUrl}/${this.globalData.CAR_LIST_TABLE}?select=*&_openid=eq.${this.globalData.openid}&order=created_at.desc`,
+      url: `${this.globalData.supabaseUrl}/${this.globalData.CAR_LIST_TABLE}?select=*&_openid=eq.${this.globalData.openid}&order=created_at.asc`,
       method: 'GET',
       header: {
         'apikey': apikey,
@@ -155,9 +166,29 @@ App<IAppOption>({
         const cars = (res.data || []) as any[]
         this.globalData.cars = cars
 
-        const currentExists = cars.some((car: any) => car.id === this.globalData.currentCarId)
-        if (!currentExists) {
-          this.globalData.currentCarId = cars.length > 0 ? cars[0].id : null
+        let preferredId = this.globalData.currentCarId
+        if (!preferredId) {
+          try {
+            const storedCurrentCarId = wx.getStorageSync(CURRENT_CAR_ID_STORAGE_KEY)
+            preferredId = storedCurrentCarId || null
+          } catch (e) {
+            preferredId = null
+          }
+        }
+
+        const currentExists = cars.some((car: any) => car.id === preferredId)
+        this.globalData.currentCarId = currentExists
+          ? preferredId
+          : (cars.length > 0 ? cars[0].id : null)
+
+        try {
+          if (this.globalData.currentCarId) {
+            wx.setStorageSync(CURRENT_CAR_ID_STORAGE_KEY, this.globalData.currentCarId)
+          } else {
+            wx.removeStorageSync(CURRENT_CAR_ID_STORAGE_KEY)
+          }
+        } catch (e) {
+          console.error('写入当前车辆缓存失败：', e)
         }
 
         if (!cars || cars.length === 0) {

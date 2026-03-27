@@ -1,0 +1,1 @@
+export const CURRENT_CAR_ID_STORAGE_KEY = 'CURRENT_CAR_ID'

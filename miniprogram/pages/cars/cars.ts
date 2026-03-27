@@ -1,3 +1,5 @@
+import { CURRENT_CAR_ID_STORAGE_KEY } from '../../utils/constants'
+
 const app = getApp()
 
 Page({
@@ -35,6 +37,16 @@ Page({
         const currentCarExists = cars.some((car: any) => car.id === app.globalData.currentCarId)
         if (!currentCarExists) {
           app.globalData.currentCarId = cars.length > 0 ? cars[0].id : null
+        }
+
+        try {
+          if (app.globalData.currentCarId) {
+            wx.setStorageSync(CURRENT_CAR_ID_STORAGE_KEY, app.globalData.currentCarId)
+          } else {
+            wx.removeStorageSync(CURRENT_CAR_ID_STORAGE_KEY)
+          }
+        } catch (e) {
+          console.error('缓存当前车辆失败', e)
         }
       },
       fail: (err) => {
@@ -88,6 +100,11 @@ Page({
     const carId = event.currentTarget.dataset.id
     const app = getApp()
     app.globalData.currentCarId = carId
+    try {
+      wx.setStorageSync(CURRENT_CAR_ID_STORAGE_KEY, carId)
+    } catch (e) {
+      console.error('缓存当前车辆失败', e)
+    }
 
     wx.navigateBack()
   },
