@@ -3,7 +3,7 @@
   <view class="card">
     <add record="{{record}}" bind:onRecordChange="onRecordChange" />
     <view class="save-wrap">
-      <van-button type="info" bind:tap="saveRecord" loading="{{isSaving}}" loading-text="保存中...">
+      <van-button type="info" custom-style="width: 100%;" bind:tap="saveRecord" loading="{{isSaving}}" loading-text="保存中...">
         保存
       </van-button>
     </view>

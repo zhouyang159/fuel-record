@@ -12,11 +12,11 @@
     <view class="content-wrap" bind:tap="closeAllSwipeCells">
       <!-- 统计面板 -->
       <view class="summary-board">
-        <view class="summary-year-row" bind:tap="onYearSelectorTap">
-          <text class="summary-year">{{summaryBoard.year}}</text>
-          <van-icon name="arrow-down" size="20rpx" color="#999" />
-        </view>
-        <view class="summary-stats-row">
+        <view class="summary-content-row">
+          <view class="summary-year-row" bind:tap="onYearSelectorTap">
+            <text class="summary-year">{{summaryBoard.year}}</text>
+            <van-icon name="arrow-down" size="20rpx" color="#999" />
+          </view>
           <view class="summary-stat">
             <text class="summary-stat-value">{{summaryBoard.totalCost}}元</text>
           </view>
@@ -45,8 +45,8 @@
         </view>
       </van-popup>
       <view class="tips-banner">
-        <view>需要两次加满才能计算出油耗</view>
-        <icon type="info" />
+        <text class="tips-text">需要两次加满才能计算出油耗</text>
+        <van-icon name="info-o" size="30rpx" color="#287b9c" />
       </view>
       <!-- 显示模块 -->
       <view class="records-wrap">
@@ -56,29 +56,38 @@
             <view class="record-card">
               <van-swipe-cell id="swipe-{{index}}" data-id="{{item.id}}" right-width="{{ 80 }}" async-close bind:open="onSwipeCellOpen" bind:close="onSwipeCellClose">
                 <van-cell-group>
-                  <view data-index="{{index}}" data-id="{{item.id}}" bind:tap="toModifyPage">
-                    <view style="display: flex; justify-content: space-between;">
-                      <view>{{item.date}} {{item.time}}</view>
-                      <view>{{item.fuelConsumption}}升/百公里</view>
-                      <view>{{item.mileage}}公里</view>
+                  <view class="record-content" data-index="{{index}}" data-id="{{item.id}}" bind:tap="toModifyPage">
+                    <view class="record-header">
+                      <text class="record-time">{{item.date}} {{item.time}}</text>
+                      <text class="record-mileage">{{item.mileage}} 公里</text>
                     </view>
-                    <view style="background-color: rgb(242, 242, 242);">
-                      <view style="display: flex; justify-content: space-between;">
-                        <view>{{item.pay}}元</view>
-                        <view>{{item.price}}元/升</view>
-                        <view>+{{item.quantity}}升</view>
+                    <view class="record-details">
+                      <view class="record-payment">
+                        <text class="record-payment-value">{{item.realPay || item.pay}}元</text>
+                        <text class="record-payment-label">本次实付</text>
                       </view>
-                      <view style="display: flex;">
-                        <view wx:if="{{item.isAddFull}}" style="color: red;">加满</view>
-                        <view wx:if="{{item.isWarningLight}}" style="color: red; margin-left: 10rpx;">
-                          灯亮
-                        </view>
+                      <view class="record-fuel-data">
+                        <text>{{item.price}} 元/升</text>
+                        <text>{{item.quantity}} 升</text>
                       </view>
+                    </view>
+                    <view wx:if="{{item.isAddFull || item.isWarningLight}}" class="record-tags">
+                      <text wx:if="{{item.isAddFull}}" class="record-tag">加满</text>
+                      <text wx:if="{{item.isWarningLight}}" class="record-tag record-tag-warning">灯亮</text>
                     </view>
                     <view class="record-footer">
-                      <view>{{item.cost}}元/公里</view>
-                      <view>{{item.costLiter}}升</view>
-                      <view>+{{item.diffMile}}公里</view>
+                      <view class="record-metric">
+                        <text class="record-metric-value">{{item.fuelConsumption}}</text>
+                        <text class="record-metric-label">升/百公里</text>
+                      </view>
+                      <view class="record-metric">
+                        <text class="record-metric-value">{{item.cost}}</text>
+                        <text class="record-metric-label">元/公里</text>
+                      </view>
+                      <view class="record-metric record-metric-distance">
+                        <text class="record-metric-value">+{{item.diffMile}}</text>
+                        <text class="record-metric-label">公里</text>
+                      </view>
                     </view>
                   </view>
                 </van-cell-group>
@@ -113,4 +122,16 @@
       </view>
     </view>
   </van-popup>
+  <view wx:if="{{showDeleteConfirm}}" class="delete-modal-mask" bind:tap="cancelDelete">
+    <view class="delete-modal" catchtap="noop">
+      <view class="delete-modal-header">
+        <text class="delete-modal-title">删除这条记录？</text>
+        <text class="delete-modal-description">删除后无法恢复</text>
+      </view>
+      <view class="delete-modal-actions">
+        <view class="delete-modal-button delete-modal-cancel" bind:tap="cancelDelete">取消</view>
+        <view class="delete-modal-button delete-modal-confirm" bind:tap="confirmDelete">删除</view>
+      </view>
+    </view>
+  </view>
 </view>

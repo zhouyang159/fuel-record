@@ -1,21 +1,29 @@
 .add-page {
-  padding: 20rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: #f4f6f7;
+  padding: 24rpx;
 }
 
 .car-name {
-  font-size: 30rpx;
+  color: #34414d;
+  font-size: 28rpx;
   font-weight: 600;
-  margin-bottom: 16rpx;
+  margin: 0 8rpx 18rpx;
 }
 
 .card {
-  border: 1rpx solid gray;
-  border-radius: 10rpx;
-  padding: 10rpx;
+  background: #ffffff;
+  border-radius: 8rpx;
+  box-shadow: 0 4rpx 20rpx rgba(31, 41, 51, 0.08);
+  padding: 24rpx;
 }
 
 .save-wrap {
-  margin-top: 10rpx;
+  margin-top: 28rpx;
   display: flex;
-  justify-content: center;
+}
+
+.save-wrap van-button {
+  flex: 1;
 }

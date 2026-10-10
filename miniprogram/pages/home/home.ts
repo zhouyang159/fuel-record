@@ -1,6 +1,5 @@
 ﻿import { RecordType, ShowCardType } from '../../utils/types'
 import { CURRENT_CAR_ID_STORAGE_KEY } from '../../utils/constants'
-import Dialog from '../../miniprogram_npm/@vant/weapp/dialog/dialog'
 
 const app = getApp()
 const FUEL_LIST_TABLE = app.globalData.FUEL_LIST_TABLE as string
@@ -28,6 +27,8 @@ Page({
     } as any,
     showYearPicker: false,
     yearRange: [] as (number | string)[],
+    showDeleteConfirm: false,
+    pendingDeleteId: '',
   },
   onLoad() {
     const app = getApp()
@@ -245,34 +246,39 @@ Page({
       case 'cell': instance.close(); break
       case 'right':
         instance.close()
-        Dialog.confirm({ message: '确定删除吗？' }).then(() => {
-          instance.close()
-          let deleteItem = this.data.fuelList.find(item => item.id === clickId)
-          if (!deleteItem) return
-          wx.request({
-            url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?id=eq.${deleteItem.id}`,
-            method: 'DELETE',
-            header: {
-              'apikey': app.globalData.supabaseAnonKey,
-              'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
-              'Content-Type': 'application/json'
-            },
-            success: () => {
-              wx.showToast({ title: '删除成功', icon: 'none', duration: 2000 })
-              this.fetchFuelListByOpenid()
-                .then(list => {
-                  this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
-                  this.calCost()
-                })
-            },
-            fail: () => {
-              wx.showToast({ title: '删除失败', icon: 'none', duration: 2000 })
-            }
-          })
-        })
+        this.setData({ showDeleteConfirm: true, pendingDeleteId: clickId })
         break
     }
     this.setData({ swipeCellId: -1 })
+  },
+  cancelDelete() {
+    this.setData({ showDeleteConfirm: false, pendingDeleteId: '' })
+  },
+  confirmDelete() {
+    const deleteId = this.data.pendingDeleteId
+    if (!deleteId) return
+
+    this.setData({ showDeleteConfirm: false, pendingDeleteId: '' })
+    wx.request({
+      url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?id=eq.${deleteId}`,
+      method: 'DELETE',
+      header: {
+        'apikey': app.globalData.supabaseAnonKey,
+        'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+        'Content-Type': 'application/json'
+      },
+      success: () => {
+        wx.showToast({ title: '删除成功', icon: 'none', duration: 2000 })
+        this.fetchFuelListByOpenid()
+          .then(list => {
+            this.setData({ fuelList: JSON.parse(JSON.stringify(list)) as RecordType[] })
+            this.calCost()
+          })
+      },
+      fail: () => {
+        wx.showToast({ title: '删除失败', icon: 'none', duration: 2000 })
+      }
+    })
   },
   closeAllSwipeCells() {
     const len = this.data.displayCardArr.length
@@ -301,17 +307,24 @@ Page({
       showCardArr[i].fuelConsumption = 0
     }
 
-    const distribute = (s: number, e: number, totalLiters: number) => {
+    const getActualPayment = (record: ShowCardType) => {
+      const realPay = record.realPay
+      return realPay === '' || realPay === null || realPay === undefined
+        ? (Number(record.pay) || 0)
+        : (Number(realPay) || 0)
+    }
+
+    const distribute = (s: number, e: number, totalLiters: number, totalCost: number) => {
       const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0)
       if (totalDistance <= 0) return
       const avgLPer100km = (totalLiters / totalDistance) * 100
+      const costPerKm = totalCost / totalDistance
       for (let k = s; k < e; k++) {
         const segDist = segments[k] || 0
         const consumeLiters = segDist * (avgLPer100km / 100)
         showCardArr[k].fuelConsumption = Number(avgLPer100km.toFixed(2))
         showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2))
-        const price = Number(showCardArr[k].price) || 0
-        showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0
+        showCardArr[k].cost = segDist > 0 ? Number(costPerKm.toFixed(2)) : 0
       }
     }
 
@@ -325,8 +338,10 @@ Page({
       if (!(oldIdx > newIdx)) continue
       const s = newIdx
       const e = oldIdx
-      const totalLiters = showCardArr.slice(s, e).reduce((sum, v) => sum + (Number(v.quantity) || 0), 0)
-      distribute(s, e, totalLiters)
+      const intervalRecords = showCardArr.slice(s, e)
+      const totalLiters = intervalRecords.reduce((sum, v) => sum + (Number(v.quantity) || 0), 0)
+      const totalCost = intervalRecords.reduce((sum, v) => sum + getActualPayment(v), 0)
+      distribute(s, e, totalLiters, totalCost)
       for (let k = s; k < e; k++) covered[k] = true
     }
 
@@ -340,20 +355,15 @@ Page({
       if (hasFull) continue
       const s = newIdx
       const e = oldIdx
+      if (covered.slice(s, e).some(Boolean)) continue
       const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0)
       if (totalDistance <= 0) continue
-      const totalLiters = Number(showCardArr[oldIdx].quantity) || 0
+      const intervalRecords = showCardArr.slice(s, e)
+      const totalLiters = intervalRecords.reduce((sum, v) => sum + (Number(v.quantity) || 0), 0)
+      const totalCost = intervalRecords.reduce((sum, v) => sum + getActualPayment(v), 0)
       if (totalLiters > 0) {
-        const avg = (totalLiters / totalDistance) * 100
-        for (let k = s; k < e; k++) {
-          if (covered[k]) continue
-          const segDist = segments[k] || 0
-          const consumeLiters = segDist * (avg / 100)
-          showCardArr[k].fuelConsumption = Number(avg.toFixed(2))
-          showCardArr[k].costLiter = -Number(consumeLiters.toFixed(2))
-          const price = Number(showCardArr[k].price) || 0
-          showCardArr[k].cost = segDist > 0 ? Number(((price * consumeLiters) / segDist).toFixed(2)) : 0
-        }
+        distribute(s, e, totalLiters, totalCost)
+        for (let k = s; k < e; k++) covered[k] = true
       }
     }
 
@@ -383,14 +393,21 @@ Page({
 
     // Calculate total cost
     const totalCost = filteredList.reduce((sum, item) => {
-      const pay = Number(item.pay) || 0
-      return sum + pay
+      const realPay = item.realPay
+      const payment = realPay === '' || realPay === null || realPay === undefined
+        ? (Number(item.pay) || 0)
+        : (Number(realPay) || 0)
+      return sum + payment
     }, 0)
 
-    // Calculate average fuel consumption from showCardArr
-    const validConsumptions = filteredShowCardArr.filter(item => Number(item.fuelConsumption || 0) > 0)
-    const avgFuelConsumption = validConsumptions.length > 0
-      ? (validConsumptions.reduce((sum, item) => sum + Number(item.fuelConsumption || 0), 0) / validConsumptions.length)
+    // Weight each measured segment by distance instead of averaging L/100km values.
+    const measuredSegments = filteredShowCardArr.filter(item =>
+      Number(item.diffMile || 0) > 0 && Number(item.costLiter || 0) < 0
+    )
+    const measuredDistance = measuredSegments.reduce((sum, item) => sum + Number(item.diffMile), 0)
+    const measuredLiters = measuredSegments.reduce((sum, item) => sum - Number(item.costLiter), 0)
+    const avgFuelConsumption = measuredDistance > 0
+      ? (measuredLiters / measuredDistance) * 100
       : 0
 
     // Calculate total mileage (difference between first and last record)

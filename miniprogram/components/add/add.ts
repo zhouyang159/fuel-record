@@ -1,6 +1,9 @@
 import { RecordType } from "../../utils/types"
 
 Component({
+  data: {
+    focusedField: '',
+  },
   properties: {
     record: {
       type: Object,
@@ -12,6 +15,12 @@ Component({
     }
   },
   methods: {
+    focusField(e) {
+      this.setData({ focusedField: e.currentTarget.dataset.field })
+    },
+    clearFocusedField() {
+      this.setData({ focusedField: '' })
+    },
     onDateChange: function (e) {
       let record: RecordType = JSON.parse(JSON.stringify(this.data.record))
       record.date = e.detail.value
@@ -76,6 +85,13 @@ Component({
         } else if (Number.parseFloat(record.quantity) > 0) {
           let price = Number(record.pay) / Number(record.quantity)
           record.price = Number(price).toFixed(2)
+        }
+
+        record.realPay = Number(record.pay).toFixed(2)
+        record.discountAmount = '0.00'
+        if (Number.parseFloat(record.quantity) > 0) {
+          const realPrice = Number(record.realPay) / Number(record.quantity)
+          record.realPrice = Number(realPrice).toFixed(2)
         }
       }
 

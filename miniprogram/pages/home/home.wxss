@@ -20,23 +20,26 @@ page {
 }
 
 .home-header {
-  padding: 16rpx 20rpx;
+  padding: 4rpx 28rpx 18rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .current-car-trigger {
-  font-size: 32rpx;
-  font-weight: bold;
+  color: #1f2933;
+  font-size: 34rpx;
+  font-weight: 600;
   display: flex;
   align-items: center;
 }
 
 .header-add-btn {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 30rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border: 1rpx solid #b7d9f1;
+  border-radius: 8rpx;
+  background: #eff8fd;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,81 +94,209 @@ page {
 
 /* 统计面板样式 */
 .summary-board {
-  background: linear-gradient(135deg, #f8f8f8 0%, #efefef 100%);
-  border-radius: 12rpx;
-  padding: 18rpx 16rpx;
-  margin-bottom: 12rpx;
+  background: #ffffff;
+  border: 1rpx solid #e1e8eb;
+  border-radius: 8rpx;
+  box-shadow: 0 2rpx 8rpx rgba(31, 41, 51, 0.04);
+  padding: 12rpx;
+  margin-bottom: 10rpx;
+}
+
+.summary-content-row {
+  display: flex;
+  align-items: center;
 }
 
 .summary-year-row {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  margin-bottom: 12rpx;
+  gap: 6rpx;
+  flex-shrink: 0;
+  margin-right: 10rpx;
+  padding: 10rpx 12rpx;
+  background: #eef7fb;
+  border-radius: 6rpx;
 }
 
 .summary-year {
-  font-size: 28rpx;
+  font-size: 27rpx;
   font-weight: 600;
-  color: #333;
-}
-
-.summary-stats-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  color: #276f92;
 }
 
 .summary-stat {
   flex: 1;
   text-align: center;
+  min-width: 0;
+  padding: 4rpx 8rpx;
+}
+
+.summary-stat + .summary-stat {
+  border-left: 1rpx solid #e8edef;
 }
 
 .summary-stat-value {
-  font-size: 26rpx;
-  color: #666;
+  font-size: 25rpx;
+  color: #34414d;
   display: block;
+  font-weight: 500;
   line-height: 1.4;
 }
 
 
 .content-wrap {
-  padding: 14rpx;
+  padding: 14rpx 20rpx;
 }
 
 .tips-banner {
   display: flex;
   align-items: center;
-  background: beige;
-  border-radius: 10rpx;
-  margin-top: 12rpx;
-  padding: 8rpx 10rpx;
+  justify-content: space-between;
+  background: #f0f8fb;
+  border-left: 6rpx solid #51a5c7;
+  border-radius: 6rpx;
+  margin-top: 0;
+  padding: 12rpx 16rpx;
+}
+
+.tips-text {
+  color: #27566b;
+  font-size: 25rpx;
+  font-weight: 600;
 }
 
 .records-wrap {
-  margin-top: 12rpx;
+  margin-top: 16rpx;
 }
 
 .record-row {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 8rpx;
+  margin-bottom: 14rpx;
 }
 
 .record-card {
   flex: 1;
-  border: 1rpx solid gray;
-  border-radius: 10rpx;
-  padding: 8rpx;
+  min-width: 0;
+  background: #ffffff;
+  border: 1rpx solid #e4e9ec;
+  border-radius: 8rpx;
+  box-shadow: 0 2rpx 8rpx rgba(31, 41, 51, 0.05);
+  overflow: hidden;
+}
+
+.record-content {
+  padding: 16rpx 18rpx 14rpx;
+}
+
+.record-header,
+.record-details,
+.record-fuel-data,
+.record-tags {
+  display: flex;
+  align-items: center;
+}
+
+.record-header {
+  justify-content: space-between;
+}
+
+.record-time {
+  color: #34414d;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.record-mileage {
+  color: #1f2933;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.record-details {
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+
+.record-payment {
+  display: flex;
+  align-items: baseline;
+}
+
+.record-payment-value {
+  color: #1f2933;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.record-payment-label,
+.record-fuel-data {
+  color: #52616d;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.record-payment-label {
+  margin-left: 8rpx;
+}
+
+.record-fuel-data {
+  gap: 16rpx;
+}
+
+.record-tags {
+  gap: 8rpx;
+  margin-top: 10rpx;
+}
+
+.record-tag {
+  background: #e5f5ef;
+  border-radius: 4rpx;
+  color: #19725d;
+  font-size: 20rpx;
+  padding: 3rpx 8rpx;
+}
+
+.record-tag-warning {
+  background: #fff2e5;
+  color: #a85c13;
 }
 
 .record-footer {
-  margin-top: 8rpx;
-  border-radius: 10rpx;
-  padding: 8rpx;
   display: flex;
-  justify-content: space-between;
-  background-color: rgb(230, 245, 240);
+  background: #f1f8f6;
+  border-top: 1rpx solid #dceee8;
+  margin-top: 14rpx;
+  padding: 10rpx 0;
+}
+
+.record-metric {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 0 16rpx;
+}
+
+.record-metric + .record-metric {
+  border-left: 1rpx solid #d7e8e2;
+}
+
+.record-metric-distance {
+  text-align: right;
+}
+
+.record-metric-value {
+  color: #1e4e43;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.record-metric-label {
+  color: #526f66;
+  font-size: 22rpx;
+  font-weight: 500;
 }
 
 /* 年份选择器样式 */
@@ -222,16 +353,82 @@ page {
 
 /* 卡片序号 */
 .record-index {
-  top: 10rpx;
-  left: 10rpx;
-  width: 40rpx;
-  height: 40rpx;
-  line-height: 40rpx;
-  background-color: #1989fa;
+  flex-shrink: 0;
+  width: 42rpx;
+  height: 42rpx;
+  line-height: 42rpx;
+  background-color: #2a8bdb;
   color: #fff;
-  border-radius: 20rpx;
+  border-radius: 50%;
   text-align: center;
-  font-size: 24rpx;
-  z-index: 10;
-  margin-right: 10rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  margin: 16rpx 12rpx 0 0;
+}
+
+.delete-modal-mask {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(24, 33, 43, 0.52);
+  padding: 40rpx;
+}
+
+.delete-modal {
+  width: 100%;
+  max-width: 560rpx;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 12rpx;
+  box-shadow: 0 20rpx 48rpx rgba(24, 33, 43, 0.22);
+}
+
+.delete-modal-header {
+  padding: 40rpx 36rpx 34rpx;
+}
+
+.delete-modal-title,
+.delete-modal-description {
+  display: block;
+}
+
+.delete-modal-title {
+  color: #1f2933;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.delete-modal-description {
+  color: #7a8791;
+  font-size: 25rpx;
+  margin-top: 12rpx;
+}
+
+.delete-modal-actions {
+  display: flex;
+  border-top: 1rpx solid #e8edef;
+}
+
+.delete-modal-button {
+  box-sizing: border-box;
+  flex: 1;
+  font-size: 30rpx;
+  padding: 26rpx 0;
+  text-align: center;
+}
+
+.delete-modal-cancel {
+  border-right: 1rpx solid #e8edef;
+  color: #4f5b66;
+}
+
+.delete-modal-confirm {
+  color: #d94841;
+  font-weight: 600;
 }
