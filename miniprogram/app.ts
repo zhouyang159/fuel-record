@@ -1,7 +1,7 @@
 
 import { CURRENT_CAR_ID_STORAGE_KEY } from './utils/constants'
 
-const env_table_pre_name = 'dev' // 'dev' or 'pro'
+const env_table_pre_name = 'pro' // 'dev' or 'pro'
 const supabaseProjectUrl = 'https://aopqucxesuyozsggfuyv.supabase.co'
 
 const apikey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcHF1Y3hlc3V5b3pzZ2dmdXl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NTY3OTIsImV4cCI6MjA4OTEzMjc5Mn0.MrWpPPOjaOKL0IqLS-JgonKTQqOuG319MY2BLyYsnvw'
