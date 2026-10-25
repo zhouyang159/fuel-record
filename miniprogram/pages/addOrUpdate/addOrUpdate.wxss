@@ -19,6 +19,118 @@
   padding: 24rpx;
 }
 
+.record-tabs {
+  display: flex;
+  margin-bottom: 24rpx;
+  padding: 6rpx;
+  border-radius: 8rpx;
+  background: #f1f4f5;
+}
+
+.record-tab {
+  flex: 1;
+  padding: 16rpx;
+  border-radius: 6rpx;
+  color: #68737d;
+  font-size: 28rpx;
+  text-align: center;
+}
+
+.record-tab-active {
+  background: #ffffff;
+  color: #1989fa;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(31, 41, 51, 0.08);
+}
+
+.electricity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.form-section {
+  background: #ffffff;
+}
+
+.section-title {
+  color: #1f2933;
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.date-time-row,
+.number-grid {
+  display: flex;
+  gap: 14rpx;
+}
+
+.picker-field,
+.input-field {
+  box-sizing: border-box;
+  border: 1rpx solid #dce3e8;
+  border-radius: 8rpx;
+  min-height: 104rpx;
+  padding: 14rpx 16rpx;
+  background: #ffffff;
+}
+
+.picker-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.field-label {
+  color: #68737d;
+  font-size: 26rpx;
+  line-height: 1.3;
+}
+
+.picker-value {
+  color: #18212b;
+  font-size: 32rpx;
+  margin-top: 6rpx;
+}
+
+.mileage-field {
+  display: flex;
+  align-items: center;
+  margin-top: 14rpx;
+}
+
+.mileage-field .field-label {
+  width: 118rpx;
+}
+
+.number-grid .input-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.input {
+  color: #18212b;
+  font-size: 32rpx;
+  height: 44rpx;
+  line-height: 44rpx;
+  margin-top: 6rpx;
+  min-width: 0;
+}
+
+.field-unit {
+  color: #94a0aa;
+  font-size: 24rpx;
+  margin-top: 3rpx;
+}
+
+.mileage-field .input {
+  flex: 1;
+  margin: 0 10rpx 0 0;
+  text-align: right;
+}
+
 .save-wrap {
   margin-top: 28rpx;
   display: flex;

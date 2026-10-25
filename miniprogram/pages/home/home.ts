@@ -6,6 +6,17 @@ const FUEL_LIST_TABLE = app.globalData.FUEL_LIST_TABLE as string
 const CAR_LOAD_TIMEOUT = 10000
 const POLL_INTERVAL = 300
 
+function recordTimestamp(record: RecordType): number {
+  const [year, month, day] = (record.date || '').split('-').map(Number)
+  const [hour = 0, minute = 0] = (record.time || '').split(':').map(Number)
+  if (!year || !month || !day) return 0
+  return new Date(year, month - 1, day, hour, minute).getTime()
+}
+
+function isFuelRecord(record: RecordType): boolean {
+  return record.recordType !== 'electricity'
+}
+
 
 Page({
   data: {
@@ -21,6 +32,7 @@ Page({
     isRefreshing: false,
     summaryBoard: {
       totalCost: 0,
+      totalCostPerKm: 0,
       avgFuelConsumption: 0,
       totalMileage: 0,
       year: '全部'
@@ -222,7 +234,8 @@ Page({
           'Content-Type': 'application/json'
         },
         success(res) {
-          const data = res.data || []
+          const data = (res.data || []) as RecordType[]
+          data.sort((a, b) => recordTimestamp(b) - recordTimestamp(a))
           resolve(data)
         },
         fail(err) {
@@ -290,21 +303,23 @@ Page({
   },
   calCost() {
     const showCardArr: ShowCardType[] = JSON.parse(JSON.stringify(this.data.fuelList))
-    const n = showCardArr.length
+    const fuelCards = showCardArr.filter(isFuelRecord)
+      .sort((a, b) => Number(b.mileage) - Number(a.mileage))
+    const n = fuelCards.length
     const segments: number[] = new Array(Math.max(0, n - 1)).fill(0)
 
     for (let k = 0; k < n - 1; k++) {
-      const m1 = Number(showCardArr[k].mileage) || 0
-      const m2 = Number(showCardArr[k + 1].mileage) || 0
+      const m1 = Number(fuelCards[k].mileage) || 0
+      const m2 = Number(fuelCards[k + 1].mileage) || 0
       segments[k] = m1 - m2
-      showCardArr[k].diffMile = segments[k]
+      fuelCards[k].diffMile = segments[k]
     }
-    if (n > 0) showCardArr[n - 1].diffMile = showCardArr[n - 1].diffMile || 0
+    if (n > 0) fuelCards[n - 1].diffMile = fuelCards[n - 1].diffMile || 0
 
-    for (let i = 0; i < n; i++) {
-      showCardArr[i].cost = 0
-      showCardArr[i].costLiter = 0
-      showCardArr[i].fuelConsumption = 0
+    for (const record of showCardArr) {
+      record.cost = 0
+      record.costLiter = 0
+      record.fuelConsumption = 0
     }
 
     const getActualPayment = (record: ShowCardType) => {
@@ -329,7 +344,7 @@ Page({
     }
 
     const fullIndexes: number[] = []
-    for (let i = 0; i < n; i++) if (showCardArr[i].isAddFull) fullIndexes.push(i)
+    for (let i = 0; i < n; i++) if (fuelCards[i].isAddFull) fullIndexes.push(i)
     const covered = new Array(Math.max(0, n - 1)).fill(false)
 
     for (let fi = fullIndexes.length - 1; fi >= 1; fi--) {
@@ -338,7 +353,7 @@ Page({
       if (!(oldIdx > newIdx)) continue
       const s = newIdx
       const e = oldIdx
-      const intervalRecords = showCardArr.slice(s, e)
+      const intervalRecords = fuelCards.slice(s, e)
       const totalLiters = intervalRecords.reduce((sum, v) => sum + (Number(v.quantity) || 0), 0)
       const totalCost = intervalRecords.reduce((sum, v) => sum + getActualPayment(v), 0)
       distribute(s, e, totalLiters, totalCost)
@@ -346,19 +361,19 @@ Page({
     }
 
     const warnIndexes: number[] = []
-    for (let i = 0; i < n; i++) if (showCardArr[i].isWarningLight) warnIndexes.push(i)
+    for (let i = 0; i < n; i++) if (fuelCards[i].isWarningLight) warnIndexes.push(i)
     for (let wi = warnIndexes.length - 1; wi >= 1; wi--) {
       const oldIdx = warnIndexes[wi]
       const newIdx = warnIndexes[wi - 1]
       if (!(oldIdx > newIdx)) continue
-      const hasFull = showCardArr.slice(newIdx + 1, oldIdx).some(v => v.isAddFull)
+      const hasFull = fuelCards.slice(newIdx + 1, oldIdx).some(v => v.isAddFull)
       if (hasFull) continue
       const s = newIdx
       const e = oldIdx
       if (covered.slice(s, e).some(Boolean)) continue
       const totalDistance = segments.slice(s, e).reduce((a, b) => a + b, 0)
       if (totalDistance <= 0) continue
-      const intervalRecords = showCardArr.slice(s, e)
+      const intervalRecords = fuelCards.slice(s, e)
       const totalLiters = intervalRecords.reduce((sum, v) => sum + (Number(v.quantity) || 0), 0)
       const totalCost = intervalRecords.reduce((sum, v) => sum + getActualPayment(v), 0)
       if (totalLiters > 0) {
@@ -393,6 +408,9 @@ Page({
 
     // Calculate total cost
     const totalCost = filteredList.reduce((sum, item) => {
+      if (item.recordType === 'electricity') {
+        return sum + (Number(item.electricityFee) || 0)
+      }
       const realPay = item.realPay
       const payment = realPay === '' || realPay === null || realPay === undefined
         ? (Number(item.pay) || 0)
@@ -402,6 +420,7 @@ Page({
 
     // Weight each measured segment by distance instead of averaging L/100km values.
     const measuredSegments = filteredShowCardArr.filter(item =>
+      isFuelRecord(item) &&
       Number(item.diffMile || 0) > 0 && Number(item.costLiter || 0) < 0
     )
     const measuredDistance = measuredSegments.reduce((sum, item) => sum + Number(item.diffMile), 0)
@@ -412,15 +431,19 @@ Page({
 
     // Calculate total mileage (difference between first and last record)
     let totalMileage = 0
-    if (filteredList.length >= 2) {
-      const maxMileage = Math.max(...filteredList.map(item => Number(item.mileage) || 0))
-      const minMileage = Math.min(...filteredList.map(item => Number(item.mileage) || 0))
+    const mileageRecords = filteredList.filter(item =>
+      item.mileage !== null && item.mileage !== undefined && item.mileage !== ''
+    )
+    if (mileageRecords.length >= 2) {
+      const maxMileage = Math.max(...mileageRecords.map(item => Number(item.mileage) || 0))
+      const minMileage = Math.min(...mileageRecords.map(item => Number(item.mileage) || 0))
       totalMileage = maxMileage - minMileage
     }
 
     this.setData({
       summaryBoard: {
         totalCost: Number(totalCost.toFixed(2)),
+        totalCostPerKm: totalMileage > 0 ? Number((totalCost / totalMileage).toFixed(2)) : 0,
         avgFuelConsumption: Number(avgFuelConsumption.toFixed(2)),
         totalMileage: totalMileage,
         year: selectedYear

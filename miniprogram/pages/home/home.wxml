@@ -21,6 +21,9 @@
             <text class="summary-stat-value">{{summaryBoard.totalCost}}元</text>
           </view>
           <view class="summary-stat">
+            <text class="summary-stat-value">{{summaryBoard.totalCostPerKm}}元/公里</text>
+          </view>
+          <view class="summary-stat">
             <text class="summary-stat-value">{{summaryBoard.avgFuelConsumption}}升/百公里</text>
           </view>
           <view class="summary-stat">
@@ -58,10 +61,21 @@
                 <van-cell-group>
                   <view class="record-content" data-index="{{index}}" data-id="{{item.id}}" bind:tap="toModifyPage">
                     <view class="record-header">
-                      <text class="record-time">{{item.date}} {{item.time}}</text>
+                      <text class="record-time">
+                        {{item.recordType === 'electricity' ? '充电' : '加油'}} · {{item.date}} {{item.time}}
+                      </text>
                       <text class="record-mileage">{{item.mileage}} 公里</text>
                     </view>
-                    <view class="record-details">
+                    <view wx:if="{{item.recordType === 'electricity'}}" class="record-details">
+                      <view class="record-payment">
+                        <text class="record-payment-value">{{item.electricityFee}}元</text>
+                        <text class="record-payment-label">充电费用</text>
+                      </view>
+                      <view class="record-fuel-data">
+                        <text>{{item.electricityKwh}} 千瓦时</text>
+                      </view>
+                    </view>
+                    <view wx:else class="record-details">
                       <view class="record-payment">
                         <text class="record-payment-value">{{item.realPay || item.pay}}元</text>
                         <text class="record-payment-label">本次实付</text>
@@ -71,11 +85,11 @@
                         <text>{{item.quantity}} 升</text>
                       </view>
                     </view>
-                    <view wx:if="{{item.isAddFull || item.isWarningLight}}" class="record-tags">
+                    <view wx:if="{{item.recordType !== 'electricity' && (item.isAddFull || item.isWarningLight)}}" class="record-tags">
                       <text wx:if="{{item.isAddFull}}" class="record-tag">加满</text>
                       <text wx:if="{{item.isWarningLight}}" class="record-tag record-tag-warning">灯亮</text>
                     </view>
-                    <view class="record-footer">
+                    <view wx:if="{{item.recordType !== 'electricity'}}" class="record-footer">
                       <view class="record-metric">
                         <text class="record-metric-value">{{item.fuelConsumption}}</text>
                         <text class="record-metric-label">升/百公里</text>

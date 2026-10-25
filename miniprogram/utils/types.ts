@@ -4,6 +4,9 @@ export interface RecordType {
   date: string,
   time: string,
   mileage: string,
+  recordType?: 'fuel' | 'electricity',
+  electricityFee?: string | number,
+  electricityKwh?: string | number,
   price: string, // 机显单价
   realPrice: string, // 实际单价
   quantity: string, // 加油量
@@ -25,4 +28,3 @@ export interface ShowCardType extends RecordType {
   costLiter: number,
   diffMile: number,
 }
-

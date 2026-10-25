@@ -1,7 +1,87 @@
 <view class="add-page">
   <view class="car-name">当前车辆：{{currentCar.name}}</view>
   <view class="card">
-    <add record="{{record}}" bind:onRecordChange="onRecordChange" />
+    <view wx:if="{{mode === 'add'}}" class="record-tabs">
+      <view
+        class="record-tab {{activeTab === 'fuel' ? 'record-tab-active' : ''}}"
+        data-type="fuel"
+        bind:tap="selectRecordType"
+      >燃油记录</view>
+      <view
+        class="record-tab {{activeTab === 'electricity' ? 'record-tab-active' : ''}}"
+        data-type="electricity"
+        bind:tap="selectRecordType"
+      >电费记录</view>
+    </view>
+
+    <add
+      wx:if="{{activeTab === 'fuel'}}"
+      record="{{record}}"
+      bind:onRecordChange="onRecordChange"
+    />
+    <view wx:else class="electricity-form">
+      <view class="form-section">
+        <view class="section-title">充电信息</view>
+        <view class="date-time-row">
+          <picker
+            class="picker-field"
+            mode="date"
+            value="{{record.date}}"
+            bindchange="onElectricityDateChange"
+          >
+            <text class="field-label">日期</text>
+            <text class="picker-value">{{record.date}}</text>
+          </picker>
+          <picker
+            class="picker-field"
+            mode="time"
+            value="{{record.time}}"
+            bindchange="onElectricityTimeChange"
+          >
+            <text class="field-label">时间</text>
+            <text class="picker-value">{{record.time}}</text>
+          </picker>
+        </view>
+        <view class="input-field mileage-field">
+          <text class="field-label">当前里程</text>
+          <input
+            class="input"
+            value="{{record.mileage}}"
+            type="number"
+            placeholder="请输入当前公里数"
+            bindinput="onElectricityMileageChange"
+          />
+          <text class="field-unit">公里</text>
+        </view>
+      </view>
+      <view class="form-section">
+        <view class="section-title">充电费用</view>
+        <view class="number-grid">
+          <view class="input-field">
+            <text class="field-label">充电电量</text>
+            <input
+              class="input"
+              value="{{record.electricityKwh}}"
+              type="digit"
+              placeholder="0.00"
+              bindinput="onElectricityKwhChange"
+            />
+            <text class="field-unit">千瓦时</text>
+          </view>
+          <view class="input-field">
+            <text class="field-label">充电费用</text>
+            <input
+              class="input"
+              value="{{record.electricityFee}}"
+              type="digit"
+              placeholder="0.00"
+              bindinput="onElectricityFeeChange"
+            />
+            <text class="field-unit">元</text>
+          </view>
+        </view>
+      </view>
+    </view>
     <view class="save-wrap">
       <van-button type="info" custom-style="width: 100%;" bind:tap="saveRecord" loading="{{isSaving}}" loading-text="保存中...">
         保存

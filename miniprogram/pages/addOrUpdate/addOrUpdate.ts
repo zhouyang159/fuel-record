@@ -23,6 +23,9 @@ function createDefaultRecord(): RecordType {
     date: getDateString(),
     time: getTimeString(),
     mileage: '',
+    recordType: 'fuel',
+    electricityFee: '',
+    electricityKwh: '',
     price: '',
     realPrice: '',
     quantity: '',
@@ -40,6 +43,7 @@ const FUEL_LIST_TABLE = app.globalData.FUEL_LIST_TABLE as string
 Page({
   data: {
     mode: 'add',
+    activeTab: 'fuel' as 'fuel' | 'electricity',
     currentCar: { name: '加载中...' } as any,
     isSaving: false,
     fuelList: [] as RecordType[],
@@ -70,6 +74,7 @@ Page({
       this.setData({
         record,
         fuelList,
+        activeTab: record.recordType === 'electricity' ? 'electricity' : 'fuel',
       })
     })
   },
@@ -97,6 +102,34 @@ Page({
 
   onRecordChange(e: { detail: RecordType }) {
     this.setData({ record: e.detail as RecordType })
+  },
+
+  selectRecordType(e: WechatMiniprogram.TouchEvent) {
+    const recordType = e.currentTarget.dataset.type as 'fuel' | 'electricity'
+    this.setData({
+      activeTab: recordType,
+      'record.recordType': recordType,
+    })
+  },
+
+  onElectricityDateChange(e: WechatMiniprogram.PickerChange) {
+    this.setData({ 'record.date': String(e.detail.value) })
+  },
+
+  onElectricityTimeChange(e: WechatMiniprogram.PickerChange) {
+    this.setData({ 'record.time': String(e.detail.value) })
+  },
+
+  onElectricityMileageChange(e: WechatMiniprogram.Input) {
+    this.setData({ 'record.mileage': e.detail.value })
+  },
+
+  onElectricityFeeChange(e: WechatMiniprogram.Input) {
+    this.setData({ 'record.electricityFee': e.detail.value })
+  },
+
+  onElectricityKwhChange(e: WechatMiniprogram.Input) {
+    this.setData({ 'record.electricityKwh': e.detail.value })
   },
 
   async fetchFuelListByOpenid() {
@@ -131,7 +164,7 @@ Page({
   },
 
   validateUpdateMileage() {
-    const fuelList = this.data.fuelList
+    const fuelList = this.data.fuelList.filter(item => item.recordType !== 'electricity')
     const record = this.data.record
 
     if (fuelList.length <= 1) return true
@@ -174,7 +207,74 @@ Page({
       return
     }
 
-    this.addRecord()
+    if (this.data.activeTab === 'electricity') {
+      this.addElectricityRecord()
+    } else {
+      this.addRecord()
+    }
+  },
+
+  addElectricityRecord() {
+    const app = getApp()
+    const { record } = this.data
+    const numberRegex = /^\d+(\.\d+)?$/
+    if (!numberRegex.test(String(record.mileage))) {
+      wx.showToast({ title: '里程必须是有效数字', icon: 'none' })
+      this.setData({ isSaving: false })
+      return
+    }
+    if (!numberRegex.test(String(record.electricityFee)) || Number(record.electricityFee) <= 0) {
+      wx.showToast({ title: '充电费用必须是大于 0 的有效数字', icon: 'none' })
+      this.setData({ isSaving: false })
+      return
+    }
+    if (!numberRegex.test(String(record.electricityKwh)) || Number(record.electricityKwh) <= 0) {
+      wx.showToast({ title: '充电电量必须是大于 0 的有效数字', icon: 'none' })
+      this.setData({ isSaving: false })
+      return
+    }
+    if (!app.globalData.currentCarId) {
+      wx.showToast({ title: '请先选择车辆', icon: 'none' })
+      this.setData({ isSaving: false })
+      return
+    }
+
+    const carName = (this.data.currentCar && this.data.currentCar.name) || ''
+    const userNick = (app.globalData.userInfo && (app.globalData.userInfo as any).nickName)
+      || (wx.getStorageSync('userInfo') && (wx.getStorageSync('userInfo') as any).nickName)
+      || ''
+
+    wx.request({
+      url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}`,
+      method: 'POST',
+      header: {
+        'apikey': app.globalData.supabaseAnonKey,
+        'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        date: record.date,
+        time: record.time,
+        mileage: Number(record.mileage),
+        recordType: 'electricity',
+        electricityFee: Number(Number(record.electricityFee).toFixed(2)),
+        electricityKwh: Number(Number(record.electricityKwh).toFixed(2)),
+        carId: app.globalData.currentCarId,
+        carName,
+        userNick,
+        _openid: app.globalData.openid,
+      },
+      success: () => {
+        wx.showToast({ title: '保存成功', icon: 'none', duration: 1200 })
+          .then(() => setTimeout(() => wx.navigateBack(), 200))
+      },
+      fail: () => {
+        wx.showToast({ title: '保存失败', icon: 'none' })
+      },
+      complete: () => {
+        this.setData({ isSaving: false })
+      }
+    })
   },
 
   async addRecord() {
@@ -185,7 +285,8 @@ Page({
       return
     }
 
-    const fuelList = await this.fetchFuelListByOpenid()
+    const fuelList = (await this.fetchFuelListByOpenid())
+      .filter(record => record.recordType !== 'electricity')
     if (validateRecordNumber(fuelList, this.data.record) === false) {
       this.setData({ isSaving: false })
       return
@@ -213,6 +314,7 @@ Page({
       || ''
 
     const recordData = {
+      recordType: 'fuel',
       date: newRecord.date,
       time: newRecord.time,
       mileage: newRecord.mileage ? Number(newRecord.mileage) : null,
@@ -256,6 +358,11 @@ Page({
   },
 
   updateRecord() {
+    if (this.data.record.recordType === 'electricity') {
+      this.updateElectricityRecord()
+      return
+    }
+
     if (validateRecordNumber(this.data.fuelList, this.data.record) === false) {
       this.setData({ isSaving: false })
       return
@@ -317,6 +424,61 @@ Page({
           .then(() => {
             setTimeout(() => wx.navigateBack(), 200)
           })
+      },
+      fail: () => {
+        wx.showToast({ title: '修改失败', icon: 'none', duration: 2000 })
+      },
+      complete: () => {
+        wx.hideLoading()
+        this.setData({ isSaving: false })
+      }
+    })
+  },
+
+  updateElectricityRecord() {
+    const { record } = this.data
+    const numberRegex = /^\d+(\.\d+)?$/
+    if (!numberRegex.test(String(record.mileage))) {
+      wx.showToast({ title: '里程必须是有效数字', icon: 'none' })
+      this.setData({ isSaving: false })
+      return
+    }
+    if (!numberRegex.test(String(record.electricityFee)) || Number(record.electricityFee) <= 0) {
+      wx.showToast({ title: '充电费用必须是大于 0 的有效数字', icon: 'none' })
+      this.setData({ isSaving: false })
+      return
+    }
+    if (!numberRegex.test(String(record.electricityKwh)) || Number(record.electricityKwh) <= 0) {
+      wx.showToast({ title: '充电电量必须是大于 0 的有效数字', icon: 'none' })
+      this.setData({ isSaving: false })
+      return
+    }
+    if (!record.id) {
+      wx.showToast({ title: '记录ID缺失', icon: 'none' })
+      this.setData({ isSaving: false })
+      return
+    }
+
+    wx.showLoading({ title: '保存中...' })
+    wx.request({
+      url: `${app.globalData.supabaseUrl}/${FUEL_LIST_TABLE}?id=eq.${record.id}`,
+      method: 'PATCH' as any,
+      header: {
+        'apikey': app.globalData.supabaseAnonKey,
+        'Authorization': `Bearer ${app.globalData.supabaseAnonKey}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        recordType: 'electricity',
+        date: record.date,
+        time: record.time,
+        mileage: Math.trunc(Number(record.mileage)),
+        electricityFee: Number(Number(record.electricityFee).toFixed(2)),
+        electricityKwh: Number(Number(record.electricityKwh).toFixed(2)),
+      },
+      success: () => {
+        wx.showToast({ title: '修改成功', icon: 'none', duration: 1200 })
+          .then(() => setTimeout(() => wx.navigateBack(), 200))
       },
       fail: () => {
         wx.showToast({ title: '修改失败', icon: 'none', duration: 2000 })

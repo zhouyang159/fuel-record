@@ -128,7 +128,7 @@ page {
   flex: 1;
   text-align: center;
   min-width: 0;
-  padding: 4rpx 8rpx;
+  padding: 4rpx 2rpx;
 }
 
 .summary-stat + .summary-stat {
@@ -141,6 +141,11 @@ page {
   display: block;
   font-weight: 500;
   line-height: 1.4;
+}
+
+.summary-stat-value {
+  font-size: 20rpx;
+  white-space: nowrap;
 }
 
 
